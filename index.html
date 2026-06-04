@@ -10,6 +10,22 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;font-size:1.05rem}
 body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden;line-height:1.75;-webkit-user-select:none;user-select:none}
+/* Block Google Lens / screenshot attempts on all images */
+img,svg,canvas{
+  -webkit-user-select:none!important;user-select:none!important;
+  pointer-events:none!important;
+  -webkit-touch-callout:none!important;
+  -webkit-user-drag:none!important;
+}
+/* Allow inputs to work normally */
+input,textarea,select{
+  -webkit-user-select:text!important;user-select:text!important;
+  pointer-events:auto!important;
+}
+/* Block screenshot overlay visible */
+#sec-bar{pointer-events:none}
+#sec-overlay{pointer-events:auto}
+input,textarea,select{-webkit-user-select:text!important;user-select:text!important;}
 body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.05) 2px,rgba(0,0,0,.05) 4px)}
 
 /* ── HEADER ── */
@@ -941,25 +957,7 @@ let _benchQueue=[];
 });
 
 // ══ FULLSCREEN (todos os navegadores) ════════════════════════════
-window.toggleFS=function(){
-  const btn=document.getElementById('fs-btn');
-  const el=document.documentElement;
-  const isFS=!!(document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement);
-  if(!isFS){
-    (el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen||function(){}).call(el);
-    if(btn){btn.textContent='✕ SAIR';btn.style.cssText+='background:rgba(239,68,68,.15)!important;color:#fca5a5!important;border-color:rgba(239,68,68,.4)!important';}
-  }else{
-    (document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen||document.msExitFullscreen||function(){}).call(document);
-    if(btn){btn.textContent='⛶ TELA CHEIA';btn.style.cssText=btn.style.cssText.replace(/background[^;]+;?/g,'').replace(/color[^;]+;?/g,'').replace(/border-color[^;]+;?/g,'');}
-  }
-};
-['fullscreenchange','webkitfullscreenchange','mozfullscreenchange','MSFullscreenChange'].forEach(ev=>{
-  document.addEventListener(ev,()=>{
-    const btn=document.getElementById('fs-btn');
-    const isFS=!!(document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement);
-    if(btn){btn.textContent=isFS?'✕ SAIR':'⛶ TELA CHEIA';}
-  });
-});
+// toggleFS handled inside security IIFE above
 
 // ══ NAV ══════════════════════════════════════════════════════════
 let _benchInited=false;
@@ -1375,6 +1373,18 @@ ohm:[
   {q:'Por que fios de alta tensão de alumínio têm maior diâmetro que fios de cobre para a mesma capacidade de corrente?',svg:null,opts:['Alumínio tem ρ maior que cobre, precisa de maior A para compensar (R=ρL/A)','Alumínio é mais leve, pode ser mais grosso','Alumínio tem ρ menor, menor resistência','Diâmetro maior não tem relação com resistência'],c:0,exp:'R=ρL/A. Alumínio (ρ=2,8×10⁻⁸) vs Cobre (1,7×10⁻⁸): maior ρ → precisa de maior A para mesma resistência.',type:'💭 CONCEITUAL'},
   ()=>{const u=rnd([12,24,48,110,220]),r=rnd([4,6,8,10,12,15,20,25]);const i=parseFloat((u/r).toFixed(2)),p=parseFloat((u*i).toFixed(1));const{opts,c}=shuf([f(p)+' W',parseFloat((p/2).toFixed(1))+' W',parseFloat((p*2).toFixed(1))+' W',parseFloat((i*i).toFixed(2))+' W'],0);return{q:`R=${fR(r)} ligado a U=${u}V. Potência dissipada?`,svg:null,opts,c,exp:`I=U/R=${f(i)}A → P=U·I=${u}×${f(i)}=<strong>${f(p)}W</strong>`,type:'🔢 CÁLCULO'};},
   {q:'Ao aumentar o comprimento de um fio pela metade (L→1,5L) mantendo a mesma área, a resistência:',svg:null,opts:['Aumenta 50% (R∝L)','Diminui 50%','Dobra','Não muda'],c:0,exp:'R=ρL/A. L→1,5L → R→1,5R. Resistência aumenta proporcionalmente ao comprimento.',type:'💭 CONCEITUAL'},
+
+  // ── OHM EXTRA BATCH 2 ─────────────────────────────────────────
+  ()=>{const u=rnd([6,9,12,15,18,21,24]),r=rnd([1,2,3,6,9]);const i=parseFloat((u/r).toFixed(1));const{opts,c}=shuf([f(i)+' A',f(parseFloat((i+2).toFixed(1)))+' A',f(parseFloat((r/u).toFixed(2)))+' A',f(parseFloat((i*r).toFixed(0)))+' A'],0);return{q:`Bateria de <strong>${u}V</strong> ligada a resistor de <strong>${fR(r)}</strong>. Qual corrente circula?`,svg:null,opts,c,exp:`I = U/R = ${u}/${r} = <strong>${f(i)} A</strong>`,type:'🔢 CÁLCULO'};},
+  ()=>{const i=rnd([0.2,0.5,0.8,1.2,1.5,2.5,3.5]),u=rnd([5,6,9,10,12,15,18,20]);const r=parseFloat((u/i).toFixed(1));const{opts,c}=shuf([fR(r),fR(parseFloat((r+5).toFixed(1))),fR(parseFloat((r/2).toFixed(1))),fR(parseFloat((r*3).toFixed(1)))],0);return{q:`Corrente de <strong>${f(i)} A</strong> com <strong>${u} V</strong> aplicados. Resistência?`,svg:null,opts,c,exp:`R = U/I = ${u}/${f(i)} = <strong>${fR(r)}</strong>`,type:'🔢 CÁLCULO'};},
+  ()=>{const r1=rnd([3,6,9,12]),r2=rnd([3,6,9,12]),u=rnd([18,24,30,36]);const req=r1+r2,i=parseFloat((u/req).toFixed(2)),u2=parseFloat((i*r2).toFixed(1));const{opts,c}=shuf([f(u2)+' V',f(parseFloat((u2+3).toFixed(1)))+' V',u+' V',f(parseFloat((i*r1).toFixed(1)))+' V'],0);return{q:`R₁=<strong>${fR(r1)}</strong>, R₂=<strong>${fR(r2)}</strong> em série, U=${u}V. Tensão em R₂?`,svg:svgS(r1,r2,u,false),opts,c,exp:`I = ${u}/${req} = ${f(i)}A → U₂ = ${f(i)}×${r2} = <strong>${f(u2)} V</strong>`,type:'🔢 CÁLCULO'};},
+  {q:'Georg Ohm publicou sua lei em 1827. A comunidade científica inicialmente:',svg:null,opts:['Rejeitou e ele perdeu o emprego','Celebrou e premiou imediatamente','Ignorou completamente','Publicou junto com ele'],c:0,exp:'Ohm foi ridicularizado e perdeu o emprego. Só em 1841 foi reconhecido com a Medalha Copley da Royal Society.',type:'💭 HISTÓRICO'},
+  {q:'A grandeza que indica a facilidade de um material conduzir corrente elétrica é:',svg:null,opts:['Condutividade elétrica (σ = 1/ρ)','Resistividade (ρ)','Indutância (L)','Capacitância (C)'],c:0,exp:'Condutividade σ = 1/ρ (inverso da resistividade). Maior σ → melhor condutor. Cobre: σ ≈ 5,8×10⁷ S/m.',type:'💭 CONCEITUAL'},
+  ()=>{const n=rnd([2,3,4,5]),r=rnd([6,8,10,12,15,20]);const rp=parseFloat((r/n).toFixed(1));const{opts,c}=shuf([fR(rp),fR(r*n),fR(r),fR(parseFloat((r/(n+1)).toFixed(1)))],0);return{q:`<strong>${n} resistores iguais</strong> de ${fR(r)} cada em <strong>paralelo</strong>. Req = ?`,svg:null,opts,c,exp:`Resistores iguais em paralelo: Req = R/n = ${r}/${n} = <strong>${fR(rp)}</strong>`,type:'🔢 CÁLCULO'};},
+  ()=>{const n=rnd([2,3,4,5]),r=rnd([4,5,6,8,10]);const rs=r*n;const{opts,c}=shuf([fR(rs),fR(r/n),fR(r),fR(rs*2)],0);return{q:`<strong>${n} resistores iguais</strong> de ${fR(r)} cada em <strong>série</strong>. Req = ?`,svg:null,opts,c,exp:`Resistores iguais em série: Req = n×R = ${n}×${r} = <strong>${fR(rs)}</strong>`,type:'🔢 CÁLCULO'};},
+  {q:'Um fio de cobre é esticado até dobrar seu comprimento. A resistência:',svg:null,opts:['Quadruplica (R = ρL/A — L dobra, A cai à metade)','Dobra apenas','Permanece igual','Reduz à metade'],c:0,exp:'Esticar dobra L e reduz A pela metade (volume constante). R = ρL/A → R_nova = ρ(2L)/(A/2) = 4R. Quadruplica!',type:'💭 CONCEITUAL'},
+  ()=>{const u=rnd([12,24,48,110,220]),r1=rnd([4,5,6,8]),r2=rnd([4,5,6,8]),r3=rnd([4,5,6,8]);const req=r1+r2+r3,i=parseFloat((u/req).toFixed(2));const{opts,c}=shuf([fR(req),fR(r1+r2),fR(r1*r2*r3),f(r1*r2/(r1+r2))+' Ω'],0);return{q:`Três resistores ${fR(r1)}, ${fR(r2)}, ${fR(r3)} em série. Req = ?`,svg:null,opts,c,exp:`Req = R₁+R₂+R₃ = ${r1}+${r2}+${r3} = <strong>${fR(req)}</strong>. I = ${u}/${req} = ${f(i)}A`,type:'🔢 CÁLCULO'};},
+  {q:'A resistência elétrica de metais como cobre e alumínio quando aquecidos:',svg:null,opts:['Aumenta (mais vibrações atômicas dificultam o fluxo de elétrons)','Diminui','Permanece constante','Zera (supercondução)'],c:0,exp:'Metais: ρ aumenta com T. Mais vibração térmica → mais colisões dos elétrons → maior resistência. Supercondução ocorre em T ≈ 0K.',type:'💭 CONCEITUAL'},
 ],
 pot:[
   ()=>{const u=rnd([110,127,220,24,12]),i=rnd([0.5,1,1.5,2,3,4,5,8,10]);const p=parseFloat((u*i).toFixed(1));const{opts,c}=shuf([p+' W',f(u+i)+' W',parseFloat((p/2).toFixed(1))+' W',parseFloat((p*2).toFixed(1))+' W'],0);return{q:`Aparelho operando a <strong>${u}V</strong> com corrente de <strong>${f(i)}A</strong>. Potência consumida?`,svg:null,opts,c,exp:`P=U×I=${u}×${f(i)}=<strong>${f(p)} W</strong>. Potência é a taxa de consumo de energia.`,type:'🔢 CÁLCULO'};},
@@ -1400,6 +1410,17 @@ pot:[
   {q:'Reduzindo o consumo de um aparelho de 1000W para 500W, o consumo de energia em 1 hora:',svg:null,opts:['Cai à metade (0,5kWh)','Dobra','Permanece igual','Cai para zero'],c:0,exp:'E=P·t. Reduzindo P pela metade, E também cai pela metade. 1kW×1h=1kWh→0,5kW×1h=0,5kWh.',type:'💭 CONCEITUAL'},
   ()=>{const u=rnd([110,127,220]),i=rnd([1,1.5,2,3,5,8,10,15,20,25]);const p=parseFloat((u*i).toFixed(0));const{opts,c}=shuf([f(p)+' W',parseFloat((p/u).toFixed(2))+' A',parseFloat((p*2).toFixed(0))+' W',f(u*2)+' W'],0);return{q:`Disjuntor protege um circuito de <strong>${u}V</strong> com corrente de <strong>${f(i)}A</strong>. Potência máxima do circuito?`,svg:null,opts,c,exp:`P=U·I=${u}×${f(i)}=<strong>${f(p)}W</strong>. Esta é a potência que o disjuntor deve suportar.`,type:'🔢 CÁLCULO'};},
   {q:'Por que fios elétricos sobrecarregados (corrente acima da capacidade) causam incêndios?',svg:null,opts:['P=RI²: corrente excedente gera calor excessivo no fio (Efeito Joule)','Os fios geram faíscas elétricas ao sobreaquecer','O campo magnético ignita o isolamento','A tensão aumenta quando a corrente sobe'],c:0,exp:'P=R·I². Corrente excessiva → potência dissipada muito alta → fio aquece → derrete o isolamento → incêndio. Por isso a bitola correta é essencial.',type:'💭 CONCEITUAL'},
+
+  // ── POT EXTRA BATCH 2 ─────────────────────────────────────────
+  ()=>{const p=rnd([500,750,1000,1200,1500,2000,2400,3000]),t=rnd([0.5,1,1.5,2,3,4,5,6,8,10]);const e=parseFloat((p*t/1000).toFixed(2));const{opts,c}=shuf([f(e)+' kWh',f(parseFloat((p*t).toFixed(0)))+' J',f(parseFloat((e*3).toFixed(2)))+' kWh',f(parseFloat((e/3).toFixed(2)))+' kWh'],0);return{q:`Aparelho de <strong>${p} W</strong> ligado por <strong>${f(t)} h</strong>. Energia consumida em kWh?`,svg:null,opts,c,exp:`E = P×t = ${p}W × ${f(t)}h = ${p*t}Wh = <strong>${f(e)} kWh</strong>`,type:'🔢 CÁLCULO'};},
+  ()=>{const u=rnd([110,127,220]),i=rnd([0.5,1,1.5,2,3,5,8,10,15,20,25]);const p=parseFloat((u*i).toFixed(0));const{opts,c}=shuf([f(p)+' W',f(u+i)+' W',f(parseFloat((p/3).toFixed(0)))+' W',f(parseFloat((p*2).toFixed(0)))+' W'],0);return{q:`Aparelho em <strong>${u} V</strong> com <strong>${f(i)} A</strong>. Potência = U·I = ?`,svg:null,opts,c,exp:`P = U × I = ${u} × ${f(i)} = <strong>${f(p)} W</strong>`,type:'🔢 CÁLCULO'};},
+  {q:'James Joule era um físico autodidata que financiou seus experimentos com o dinheiro de:',svg:null,opts:['A cervejaria da família','Uma bolsa do governo britânico','A Real Academia de Ciências','Uma herança de um tio'],c:0,exp:'Joule (1818–1889) era filho de um rico cervejeiro inglês. Usou o laboratório caseiro e o dinheiro da família para seus experimentos sobre calor e energia.',type:'💭 HISTÓRICO'},
+  ()=>{const r=rnd([5,8,10,12,15,20,25,40]),i=rnd([1,2,3,4,5,6]);const p=r*i*i;const t=rnd([1,2,3,4,5,10,30,60]);const q=p*t;const{opts,c}=shuf([f(q)+' J',f(parseFloat((q/4).toFixed(0)))+' J',f(parseFloat((q*2).toFixed(0)))+' J',f(parseFloat((q/2).toFixed(0)))+' J'],0);return{q:`Resistor <strong>${fR(r)}</strong> com corrente <strong>${i}A</strong> por <strong>${t}s</strong>. Calor gerado Q=R·I²·t?`,svg:null,opts,c,exp:`Q = R·I²·t = ${r}×${i}²×${t} = ${r}×${i*i}×${t} = <strong>${f(q)} J</strong>`,type:'🔢 CÁLCULO'};},
+  {q:'Uma lâmpada incandescente de 100 W e uma LED de 10 W produzem luminosidade semelhante. A incandescente desperdiça mais energia porque:',svg:null,opts:['Converte ~95% da energia em calor (Efeito Joule) e só ~5% em luz','A LED usa tensão maior','A incandescente opera em CC enquanto LED usa CA','O filamento tem maior área'],c:0,exp:'Lâmpadas incandescentes: filamento aquece até ~2.700K e emite luz. Cerca de 90-95% da energia vira calor (Joule) e apenas 5-10% vira luz visível.',type:'💭 CONCEITUAL'},
+  ()=>{const r1=rnd([4,5,6,8]),r2=rnd([8,10,12,16]),u=rnd([12,24,36,48]);const req=parseFloat((r1*r2/(r1+r2)).toFixed(2)),it=parseFloat((u/req).toFixed(2)),p1=parseFloat((u*u/r1).toFixed(1)),p2=parseFloat((u*u/r2).toFixed(1)),pt=parseFloat((u*it).toFixed(1));const{opts,c}=shuf([f(pt)+' W',f(parseFloat((pt/2).toFixed(1)))+' W',f(p1)+' W',f(p2)+' W'],0);return{q:`Paralelo: R₁=${fR(r1)}, R₂=${fR(r2)}, U=${u}V. Potência TOTAL?`,svg:svgP(r1,r2,u),opts,c,exp:`Req=${f(req)}Ω, It=${f(it)}A → Ptotal = U×It = ${u}×${f(it)} = <strong>${f(pt)} W</strong>`,type:'🔢 CÁLCULO'};},
+  {q:'O custo de operação de um aparelho elétrico depende principalmente de:',svg:null,opts:['Potência (W) × tempo de uso × tarifa (R$/kWh)','Apenas da tensão da tomada (127V ou 220V)','Apenas do número de tomadas no cômodo','Da resistência interna do aparelho'],c:0,exp:'Custo = E × tarifa = P(kW) × t(h) × R$/kWh. Trocar aparelhos por modelos mais eficientes (menor W) reduz a conta de luz proporcionalmente.',type:'💭 CONCEITUAL'},
+  ()=>{const u=rnd([110,127,220]),p=rnd([800,1000,1200,1500,2000,3000,4400,5500]);const i=parseFloat((p/u).toFixed(2));const r=parseFloat((u*u/p).toFixed(1));const{opts,c}=shuf([fR(r),fR(parseFloat((r*2).toFixed(1))),f(i)+' Ω',fR(parseFloat((r/3).toFixed(1)))],0);return{q:`Aparelho de <strong>${p}W / ${u}V</strong>. Resistência do elemento aquecedor?`,svg:null,opts,c,exp:`R = U²/P = ${u}²/${p} = ${u*u}/${p} = <strong>${fR(r)}</strong>`,type:'🔢 CÁLCULO'};},
+  {q:'Em um circuito série, qual resistor representa maior risco de superaquecimento?',svg:null,opts:['O de maior resistência (P = R·I² — mesma I, maior R → maior P)','O de menor resistência','Todos aquecem igual','O que fica no centro do circuito'],c:0,exp:'Em série a corrente é igual em todos. P = R·I². Maior R → maior potência dissipada como calor → maior risco.',type:'💭 CONCEITUAL'},
 ],
 cap:[
   ()=>{const cc=rnd([10,22,47,100,220,470]),u=rnd([5,10,12,24,50,100]);const q=parseFloat((cc*u/1000).toFixed(3));const{opts,c}=shuf([f(q)+' mC',f(cc/u)+' mC',parseFloat((q*2).toFixed(3))+' mC',parseFloat((q/2).toFixed(3))+' mC'],0);return{q:`Capacitor de <strong>${cc}μF</strong> carregado a <strong>${u}V</strong>. Carga armazenada? <em style="color:var(--txt2);font-size:.85rem">(Q=C·U)</em>`,svg:null,opts,c,exp:`Q=C×U=${cc}×10⁻⁶×${u}=<strong>${f(q)} mC</strong>`,type:'🔢 CÁLCULO'};},
@@ -1422,6 +1443,16 @@ cap:[
   {q:'Um capacitor de 1000μF está carregado a 100V. A tensão é reduzida para 50V. A energia armazenada:',svg:null,opts:['Cai para ¼ do valor original (E∝U²)','Cai para metade','Permanece igual','Dobra'],c:0,exp:'E=½CU². U cai à metade→E=½C(U/2)²=¼(½CU²). Energia cai para ¼.',type:'💭 CONCEITUAL'},
   ()=>{const r_k=rnd([1,2,5,10,22,47]),cc=rnd([10,22,47,100,220,470]);const tau=parseFloat((r_k*1000*cc*1e-6).toFixed(3));const{opts,c}=shuf([f(tau)+' s',parseFloat((tau*2).toFixed(3))+' s',parseFloat((tau/2).toFixed(3))+' s',f(r_k*cc)+' s'],0);return{q:`Circuito RC: R=${r_k}kΩ, C=${cc}μF. Constante de tempo τ=R·C=?`,svg:null,opts,c,exp:`τ=${r_k}×10³×${cc}×10⁻⁶=<strong>${f(tau)}s</strong>. Após 5τ=${f(tau*5)}s o capacitor está praticamente carregado.`,type:'🔢 CÁLCULO'};},
   {q:'A memória RAM do computador usa capacitores DRAM. Por que ela perde dados sem energia elétrica?',svg:null,opts:['Capacitores têm corrente de fuga — perdem carga sem refresh','Capacitores se descarregam imediatamente ao desligar','A tensão do capacitor aumenta sem energia','RAM usa indutores, não capacitores'],c:0,exp:'Capacitores DRAM perdem carga (corrente de fuga). Precisam ser "refrescados" milhares de vezes/segundo. Sem energia elétrica, a carga se perde e os dados somem.',type:'💭 CONCEITUAL'},
+
+  // ── CAP EXTRA BATCH 2 ──────────────────────────────────────────
+  ()=>{const c1=rnd([10,22,47,100,220]),c2=c1;const cp=c1+c2;const cs=parseFloat((c1*c2/(c1+c2)).toFixed(1));const{opts,c}=shuf([`Série: ${f(cs)}μF, Paralelo: ${cp}μF`,`Série: ${cp}μF, Paralelo: ${f(cs)}μF`,`Ambos: ${c1}μF`,`Série: ${f(cs)}μF, Paralelo: ${f(cs)}μF`],0);return{q:`Dois capacitores de <strong>${c1}μF cada</strong>. Ceq em série e em paralelo?`,svg:null,opts,c,exp:`Série: Ceq = C/2 = ${f(cs)}μF. Paralelo: Ceq = 2C = ${cp}μF. Paralelo soma, série divide!`,type:'🔢 CÁLCULO'};},
+  {q:'Michael Faraday era filho de ferreiro e nunca cursou uma universidade. Descobriu a indução eletromagnética em:',svg:null,opts:['1831','1827','1845','1820'],c:0,exp:'Faraday (1791–1867) descobriu a indução em 1831, inventou o motor elétrico e o gerador. A unidade Farad (F) homenageia seu legado.',type:'💭 HISTÓRICO'},
+  ()=>{const cc=rnd([100,220,470,1000,2200]),u=rnd([10,15,20,24,50,100]);const q=parseFloat((cc*u/1000).toFixed(2));const e_mj=parseFloat((.5*cc*1e-6*u*u*1000).toFixed(2));const{opts,c}=shuf([f(q)+' mC',f(parseFloat((q*2).toFixed(2)))+' mC',f(cc*u)+' μC·V',f(parseFloat((q/2).toFixed(2)))+' mC'],0);return{q:`C=<strong>${cc}μF</strong>, U=<strong>${u}V</strong>. Carga Q = C·U = ?`,svg:null,opts,c,exp:`Q = C×U = ${cc}×10⁻⁶ × ${u} = <strong>${f(q)} mC</strong>. Energia armazenada: ${f(e_mj)} mJ`,type:'🔢 CÁLCULO'};},
+  {q:'Qual a principal diferença entre associar capacitores em série vs. em paralelo?',svg:null,opts:['Série: Ceq menor (como dividir); Paralelo: Ceq maior (como somar placas)','Série: Ceq maior; Paralelo: Ceq menor','Não há diferença — Ceq é sempre igual','Série aumenta tensão máxima; Paralelo reduz'],c:0,exp:'Série: tensão se divide entre os capacitores (útil para suportar tensões maiores), Ceq < menor C. Paralelo: cargas somam-se, Ceq = ΣCᵢ.',type:'💭 CONCEITUAL'},
+  ()=>{const r_k=rnd([1,2,5,10,22,47,100]),cc=rnd([10,22,47,100,220,470,1000]);const tau=parseFloat((r_k*1000*cc*1e-6).toFixed(3));const t5=parseFloat((tau*5).toFixed(3));const{opts,c}=shuf([f(tau)+' s',f(parseFloat((tau*2).toFixed(3)))+' s',f(r_k+cc)+' s',f(parseFloat((tau/5).toFixed(4)))+' s'],0);return{q:`R=${r_k}kΩ, C=${cc}μF → τ = R·C = ? (tempo para carregar 63%)`,svg:null,opts,c,exp:`τ = ${r_k}×10³ × ${cc}×10⁻⁶ = <strong>${f(tau)} s</strong>. Carga completa em 5τ ≈ ${f(t5)} s`,type:'🔢 CÁLCULO'};},
+  {q:'Por que o capacitor de um flash de câmera fotográfica pode dar um choque mesmo com a câmera desligada?',svg:null,opts:['Capacitores retêm carga mesmo sem alimentação — energia persiste no campo elétrico','A câmera tem uma bateria oculta extra','O flash gera sua própria tensão ao girar','A carga é perdida em segundos — não há risco'],c:0,exp:'Capacitores armazenam carga elétrica no campo entre as placas, independente da bateria. Sem resistência de descarga, a carga pode persistir por horas ou dias.',type:'💭 CONCEITUAL'},
+  ()=>{const c1=rnd([10,22,47,100]),c2=rnd([22,47,100,220]),u=rnd([10,15,20,24,50]);const cp=c1+c2;const ep=parseFloat((.5*cp*1e-6*u*u*1000).toFixed(2));const e1=parseFloat((.5*c1*1e-6*u*u*1000).toFixed(2));const{opts,c}=shuf([f(ep)+' mJ',f(e1)+' mJ',f(parseFloat((ep*2).toFixed(2)))+' mJ',f(parseFloat((ep/2).toFixed(2)))+' mJ'],0);return{q:`C₁=${c1}μF e C₂=${c2}μF em <strong>paralelo</strong> com U=${u}V. Energia total?`,svg:null,opts,c,exp:`Ceq=${c1}+${c2}=${cp}μF → E = ½×${cp}×10⁻⁶×${u}² = <strong>${f(ep)} mJ</strong>`,type:'🔢 CÁLCULO'};},
+  {q:'A DRAM (memória RAM dinâmica) armazena cada bit usando um transistor e um capacitor. O nome "dinâmica" refere-se a:',svg:null,opts:['Necessidade de refresh contínuo: capacitores perdem carga e devem ser recarregados','A velocidade de acesso à memória','A tensão variável usada na leitura','O tamanho dinâmico dos dados armazenados'],c:0,exp:'DRAM precisa de ciclos de refresh (milhares de vezes por segundo) porque os capacitores têm corrente de fuga. SRAM usa flip-flops — sem refresh, mas ocupa mais área.',type:'💭 CONCEITUAL'},
 ],
 ind:[
   ()=>{const l=rnd([10,20,50,100,200,500]),i=rnd([1,2,3,4,5,6,8,10]);const e=parseFloat((.5*l/1000*i*i*1000).toFixed(2));const{opts,c}=shuf([f(e)+' mJ',f(l*i/1000)+' J',parseFloat((e*2).toFixed(2))+' mJ',parseFloat((e/4).toFixed(2))+' mJ'],0);return{q:`Indutor de <strong>${l}mH</strong> com corrente de <strong>${i}A</strong>. Energia armazenada? <em style="color:var(--txt2);font-size:.85rem">(E=½LI²)</em>`,svg:null,opts,c,exp:`E=½LI²=½×${l}×10⁻³×${i}²=<strong>${f(e)} mJ</strong>`,type:'🔢 CÁLCULO'};},
@@ -1444,6 +1475,16 @@ ind:[
   {q:'Qual a vantagem de usar indutores (bobinas) em filtros de fontes chaveadas de computadores?',svg:null,opts:['Bloqueiam variações rápidas de corrente (ruídos de alta frequência)','Armazenam carga como capacitores','Aumentam a tensão de saída','Reduzem a resistência DC do circuito'],c:0,exp:'XL=2πfL aumenta com f. Ruídos de alta frequência→XL alto→bloqueados. Corrente DC (f≈0)→XL≈0→passa livremente.',type:'💭 CONCEITUAL'},
   {q:'Dois indutores de 10mH em série têm indutância equivalente de:',svg:null,opts:['20mH','5mH','100mH','10mH'],c:0,exp:'Indutores em série: Leq=L₁+L₂+...=10+10=20mH. Comportamento igual aos resistores em série.',type:'💭 CONCEITUAL'},
   ()=>{const xl=rnd([10,20,50,100,200]),f2=rnd([50,60,100]);const l=parseFloat((xl/(2*Math.PI*f2)*1000).toFixed(1));const{opts,c}=shuf([f(l)+' mH',parseFloat((l*2).toFixed(1))+' mH',parseFloat((l/2).toFixed(1))+' mH',f(xl*f2)+' mH'],0);return{q:`XL=${xl}Ω a ${f2}Hz. Qual indutância L? (XL=2πfL)`,svg:null,opts,c,exp:`L=XL/(2πf)=${xl}/(2π×${f2})≈<strong>${f(l)}mH</strong>`,type:'🔢 CÁLCULO'};},
+
+  // ── IND EXTRA BATCH 2 ──────────────────────────────────────────
+  {q:'Joseph Henry descobriu a auto-indução em 1832. Sua principal contribuição prática foi:',svg:null,opts:['O relé elétrico — base do telégrafo e da telefonia','O capacitor de placas paralelas','O motor de corrente alternada','A pilha voltaica'],c:0,exp:'Henry construiu relés elétricos de alta potência. O relé usa uma bobina para acionar contatos mecanicamente — base do telégrafo de Morse e depois da telefonia.',type:'💭 HISTÓRICO'},
+  ()=>{const l=rnd([1,5,10,20,50,100,200,500,1000]),f2=rnd([50,60,100,200,500,1000,5000,10000]);const xl=parseFloat((2*Math.PI*f2*l/1000).toFixed(2));const{opts,c}=shuf([f(xl)+' Ω',f(parseFloat((xl*2).toFixed(2)))+' Ω',f(parseFloat((xl/3).toFixed(2)))+' Ω',f(l*f2/1000)+' Ω'],0);return{q:`L=<strong>${l}mH</strong>, f=<strong>${f2}Hz</strong> → XL = 2π·f·L = ?`,svg:null,opts,c,exp:`XL = 2π × ${f2} × ${l}×10⁻³ ≈ <strong>${f(xl)} Ω</strong>`,type:'🔢 CÁLCULO'};},
+  ()=>{const l=rnd([10,50,100,200,500,1000]),i=rnd([0.5,1,2,3,5,8,10]);const e=parseFloat((.5*l/1000*i*i).toFixed(4));const e_mj=parseFloat((e*1000).toFixed(2));const{opts,c}=shuf([f(e_mj)+' mJ',f(parseFloat((e_mj*4).toFixed(2)))+' mJ',f(l*i)+' mJ',f(parseFloat((e_mj/4).toFixed(2)))+' mJ'],0);return{q:`L=<strong>${l}mH</strong>, I=<strong>${i}A</strong> → E = ½·L·I² = ?`,svg:null,opts,c,exp:`E = ½×${l}×10⁻³×${i}² = <strong>${f(e_mj)} mJ</strong>`,type:'🔢 CÁLCULO'};},
+  {q:'Um indutor em CA de alta frequência (ex: rádio FM, 100 MHz) se comporta como:',svg:null,opts:['Praticamente circuito aberto (XL = 2πfL → muito alto)','Fio condutor (resistência zero)','Capacitor (armazena carga)','Resistor fixo de 50Ω'],c:0,exp:'XL = 2πfL. Em 100 MHz com L=1μH: XL = 2π×10⁸×10⁻⁶ ≈ 628Ω. Alta frequência → XL altíssimo → bloqueia o sinal → quase circuito aberto.',type:'💭 CONCEITUAL'},
+  ()=>{const l=rnd([10,50,100,200,500]),r=rnd([1,2,5,10,20,50,100]);const tau=parseFloat((l/r).toFixed(1));const{opts,c}=shuf([f(tau)+' ms',f(parseFloat((tau*3).toFixed(1)))+' ms',f(l+r)+' ms',f(parseFloat((tau/3).toFixed(1)))+' ms'],0);return{q:`L=${l}mH, R=${fR(r)} → τ = L/R = ? (tempo para I atingir 63% do valor final)`,svg:null,opts,c,exp:`τ = L/R = ${l}×10⁻³/${r} = <strong>${f(tau)} ms</strong>`,type:'🔢 CÁLCULO'};},
+  {q:'Transformadores de distribuição de energia elétrica elevam a tensão para centenas de kV na transmissão. O objetivo é:',svg:null,opts:['Reduzir a corrente → reduzir perdas P=R·I² nos fios de transmissão','Aumentar a potência disponível','Reduzir a frequência da CA para 50/60Hz','Converter CC em CA'],c:0,exp:'P = constante. Tensão 10× maior → corrente 10× menor → perdas nos fios 100× menores (P=R·I²). Por isso transmite-se em alta tensão e distribui em baixa.',type:'💭 CONCEITUAL'},
+  ()=>{const xl=rnd([10,20,50,100,200,500]),f3=rnd([50,60,100,200]);const l=parseFloat((xl/(2*Math.PI*f3)*1000).toFixed(1));const{opts,c}=shuf([f(l)+' mH',f(parseFloat((l*2).toFixed(1)))+' mH',f(parseFloat((l/2).toFixed(1)))+' mH',f(xl*f3)+' mH'],0);return{q:`XL=${xl}Ω a ${f3}Hz. Indutância L = XL/(2π·f) = ?`,svg:null,opts,c,exp:`L = ${xl}/(2π×${f3}) = <strong>${f(l)} mH</strong>`,type:'🔢 CÁLCULO'};},
+  {q:'A "faísca" ao desligar um aparelho com motor (geladeira, ar-condicionado) é causada por:',svg:null,opts:['Auto-indução: ε = −L·dI/dt — a bobina gera pico de alta tensão ao ser desligada','Capacitância do motor criando descarga','Corrente de partida muito alta','Aterramento deficiente'],c:0,exp:'Ao desligar, dI/dt é enorme → ε = −L·dI/dt → pico de centenas de volts. Por isso usam-se diodos de roda livre (flyback diodes) para proteger o circuito.',type:'💭 CONCEITUAL'},
 ],
 circ:[
   ()=>{const r1=rnd([4,5,6,8]),r2=rnd([4,5,6,8]),r3=rnd([4,5,6,8]),u=rnd([24,36,48,60]);const req=r1+r2+r3,i=parseFloat((u/req).toFixed(2));const{opts,c}=shuf([f(i)+' A',parseFloat((u/r1).toFixed(2))+' A',parseFloat((i*2).toFixed(2))+' A',f(parseFloat((u/(r1+r2)).toFixed(2)))+' A'],0);return{q:`Série: R₁=${fR(r1)}, R₂=${fR(r2)}, R₃=${fR(r3)}, U=${u}V. Corrente total?`,svg:svgS(r1,r2,u,false),opts,c,exp:`Req=${r1}+${r2}+${r3}=${req}Ω → I=${u}/${req}=<strong>${f(i)} A</strong>. Mesma corrente em todos.`,type:'🔢 CÁLCULO'};},
@@ -1467,6 +1508,16 @@ circ:[
   ()=>{const r1=rnd([4,6,8]),r2=rnd([4,6,8]),r3=rnd([4,6,8]),u=rnd([24,30,36,48]);const rp=parseFloat((r2*r3/(r2+r3)).toFixed(2)),req=parseFloat((r1+rp).toFixed(2)),it=parseFloat((u/req).toFixed(2)),pt=parseFloat((u*it).toFixed(1)),p1=parseFloat((r1*it*it).toFixed(1));const up=parseFloat((u-it*r1).toFixed(1));const p2=parseFloat((up*up/r2).toFixed(1)),p3=parseFloat((up*up/r3).toFixed(1));const maior=r2<=r3?1:2;const{opts,c}=shuf([`R₁=${fR(r1)}→P=${f(p1)}W`,`R₂=${fR(r2)}→P=${f(p2)}W`,`R₃=${fR(r3)}→P=${f(p3)}W`,`Todos igual`],maior);return{q:`Misto: R₁=${fR(r1)} série + R₂=${fR(r2)}∥R₃=${fR(r3)}, U=${u}V. Qual componente dissipa mais?`,svg:svgM(r1,r2,r3,u),opts,c,exp:`It=${f(it)}A: P₁=${f(p1)}W. Up=${f(up)}V: P₂=${f(p2)}W, P₃=${f(p3)}W → <strong>maior no menor R do paralelo</strong>.`,type:'🔢 CÁLCULO'};},
   {q:'Num nó de circuito com 3 fios: I₁=5A entrando, I₂=3A saindo. Qual I₃?',svg:null,opts:['2A saindo (LKC: 5=3+2)','2A entrando','8A saindo','5A saindo'],c:0,exp:'LKC: ΣI_entrada=ΣI_saída. 5=3+I₃→I₃=2A saindo. Nenhuma carga é criada ou destruída.',type:'💭 CONCEITUAL'},
   ()=>{const u=rnd([12,24,36]),r1=rnd([2,3,4]),r2=rnd([6,8,12]),r3=rnd([6,8,12]);const rp=parseFloat((r2*r3/(r2+r3)).toFixed(2)),req=parseFloat((r1+rp).toFixed(2)),it=parseFloat((u/req).toFixed(2)),u1=parseFloat((it*r1).toFixed(2)),up=parseFloat((u-u1).toFixed(2));const{opts,c}=shuf([f(up)+' V',u+' V',f(u1)+' V',parseFloat((up*2).toFixed(2))+' V'],0);return{q:`Misto: R₁=${fR(r1)} série + R₂=${fR(r2)}∥R₃=${fR(r3)}, U=${u}V. Tensão no paralelo?`,svg:svgM(r1,r2,r3,u),opts,c,exp:`It=${f(it)}A, U₁=${f(u1)}V → Up=U−U₁=${u}−${f(u1)}=<strong>${f(up)}V</strong>. Mesma tensão em R₂ e R₃.`,type:'🔢 CÁLCULO'};},
+
+  // ── CIRC EXTRA BATCH 2 ────────────────────────────────────────
+  {q:'Gustav Kirchhoff enunciou suas leis de circuitos em 1845. Qual era sua idade?',svg:null,opts:['21 anos (nasceu em 1824)','35 anos','45 anos','18 anos'],c:0,exp:'Kirchhoff (1824–1887) publicou as leis dos nós e das malhas com apenas 21 anos, como estudante universitário em Königsberg.',type:'💭 HISTÓRICO'},
+  ()=>{const r1=rnd([3,4,5,6]),r2=rnd([6,8,10,12]),r3=rnd([3,4,5,6]),u=rnd([18,24,30,36]);const rp=parseFloat((r2*r3/(r2+r3)).toFixed(2)),req=parseFloat((r1+rp).toFixed(2)),it=parseFloat((u/req).toFixed(2)),u1=parseFloat((it*r1).toFixed(1)),up=parseFloat((u-u1).toFixed(1));const{opts,c}=shuf([f(up)+' V',u+' V',f(u1)+' V',f(parseFloat((up*2).toFixed(1)))+' V'],0);return{q:`Misto: R₁=${fR(r1)} série + R₂=${fR(r2)}∥R₃=${fR(r3)}, U=${u}V. Tensão no ramal paralelo?`,svg:svgM(r1,r2,r3,u),opts,c,exp:`It=${f(it)}A, U₁=${f(u1)}V → Upar = U−U₁ = ${u}−${f(u1)} = <strong>${f(up)} V</strong>`,type:'🔢 CÁLCULO'};},
+  ()=>{const r1=rnd([2,3,4,5]),r2=rnd([4,6,8,10]),r3=rnd([4,6,8,10]),u=rnd([20,24,30,36]);const rp=parseFloat((r2*r3/(r2+r3)).toFixed(2)),req=parseFloat((r1+rp).toFixed(2)),it=parseFloat((u/req).toFixed(2)),up=parseFloat((u-it*r1).toFixed(1)),i2=parseFloat((up/r2).toFixed(2)),i3=parseFloat((up/r3).toFixed(2));const{opts,c}=shuf([f(i2)+' A',f(it)+' A',f(i3)+' A',f(parseFloat((i2/2).toFixed(2)))+' A'],0);return{q:`Misto: R₁=${fR(r1)} série + R₂=${fR(r2)}∥R₃=${fR(r3)}, U=${u}V. Corrente em R₂?`,svg:svgM(r1,r2,r3,u),opts,c,exp:`Req=${f(req)}Ω, It=${f(it)}A, Up=${f(up)}V → I₂ = Up/R₂ = ${f(up)}/${r2} = <strong>${f(i2)} A</strong>`,type:'🔢 CÁLCULO'};},
+  {q:'A lei das malhas de Kirchhoff (LKT) é uma consequência da conservação de energia. Significa que:',svg:null,opts:['A soma das tensões em qualquer caminho fechado é zero — energia conservada','A soma das correntes em qualquer nó é zero','A resistência total é sempre positiva','A potência total do circuito é constante'],c:0,exp:'LKT: ΣU = 0 (malha). Ao percorrer uma malha completa, o trabalho líquido é zero — conservação de energia. Desenvolvida por Kirchhoff em 1845.',type:'💭 CONCEITUAL'},
+  ()=>{const r1=rnd([4,5,6,8,10]),r2=rnd([4,5,6,8,10]),r3=rnd([4,5,6,8,10]),r4=rnd([4,5,6,8,10]),u=rnd([20,24,30,40,48]);const req=r1+r2+r3+r4,i=parseFloat((u/req).toFixed(2)),p_max=parseFloat((Math.max(r1,r2,r3,r4)*i*i).toFixed(1));const r_max=Math.max(r1,r2,r3,r4);const{opts,c}=shuf([fR(r_max)+` — P=${f(p_max)}W`,fR(Math.min(r1,r2,r3,r4)),fR(req/4),'Todos iguais'],0);return{q:`Série: R₁=${fR(r1)},R₂=${fR(r2)},R₃=${fR(r3)},R₄=${fR(r4)}, U=${u}V. Qual resistor aquece mais?`,svg:null,opts,c,exp:`Em série I=${f(i)}A igual. P=R·I². Maior R=${r_max}Ω → P=${f(p_max)}W — <strong>maior calor</strong>.`,type:'🔢 CÁLCULO'};},
+  {q:'Um nó de circuito recebe 8A por dois fios e envia corrente por três fios. Se I₁=3A e I₂=2A saem, qual I₃?',svg:null,opts:['3A (LKC: 8 = 3 + 2 + I₃)','8A','5A','2A'],c:0,exp:'LKC: ΣI_entrada = ΣI_saída → 8 = 3 + 2 + I₃ → I₃ = 3A. Nenhuma carga é criada ou destruída no nó.',type:'💭 CONCEITUAL'},
+  ()=>{const r1=rnd([2,3,4]),r2=rnd([6,8,12]),r3=rnd([6,8,12]),u=rnd([18,24,30,36]);const rp=parseFloat((r2*r3/(r2+r3)).toFixed(2)),req=parseFloat((r1+rp).toFixed(2)),it=parseFloat((u/req).toFixed(2)),pt=parseFloat((u*it).toFixed(1)),p1=parseFloat((r1*it*it).toFixed(1));const up=parseFloat((u-it*r1).toFixed(1));const p2=parseFloat((up*up/r2).toFixed(1)),p3=parseFloat((up*up/r3).toFixed(1));const{opts,c}=shuf([f(pt)+' W',f(p1)+' W',f(parseFloat((pt/2).toFixed(1)))+' W',f(parseFloat((pt*3).toFixed(1)))+' W'],0);return{q:`Misto: R₁=${fR(r1)} série + R₂=${fR(r2)}∥R₃=${fR(r3)}, U=${u}V. Potência TOTAL?`,svg:svgM(r1,r2,r3,u),opts,c,exp:`Req=${f(req)}Ω, It=${f(it)}A → Ptotal = U×It = ${u}×${f(it)} = <strong>${f(pt)} W</strong>. (P₁=${f(p1)}W, P₂=${f(p2)}W, P₃=${f(p3)}W)`,type:'🔢 CÁLCULO'};},
+  {q:'Em qual configuração a falha de um único componente NÃO interrompe os demais?',svg:null,opts:['Paralelo (cada ramo é independente)','Série (caminho único)','Ambos da mesma forma','Depende da resistência do componente'],c:0,exp:'Em paralelo cada ramo tem caminho independente. Abrir um ramo não afeta os outros. Em série, a falha de um interrompe TODO o circuito — ex: pisca-pisca antigo.',type:'💭 CONCEITUAL'},
 ],
 };
 
@@ -2121,85 +2172,333 @@ function initBench(){
   draw();
 } // end initBench
 
-// ══ SECURITY SYSTEM ══════════════════════════════════════════════
+// ══ SECURITY SYSTEM — ANTI-LENS / ANTI-EXIT ════════════════════
 (function(){
-  let suspCount=0;
-  const MAX_SUSP=3;
+  let suspCount = 0;
+  const MAX_SUSP = 3;
+  let _quizActive = false;   // true while a quiz is in progress
+  let _fsRequested = false;  // true when WE requested fullscreen
+  let _exitingByButton = false; // true when user clicks our button
+
+  // ── Detect quiz in progress ───────────────────────────────────
+  function isQuizActive(){
+    return ['ohm','pot','cap','ind','circ'].some(m=>{
+      const qEl=document.getElementById(m+'-quiz');
+      return qEl&&qEl.style.display!=='none';
+    });
+  }
+
+  // ── Audio alert ───────────────────────────────────────────────
   function playAlert(loud){
     try{
       const ac=new(window.AudioContext||window.webkitAudioContext)();
-      const beep=(t,freq,type,vol)=>{const o=ac.createOscillator(),g=ac.createGain();o.connect(g);g.connect(ac.destination);o.type=type||'square';o.frequency.setValueAtTime(freq,t);o.frequency.exponentialRampToValueAtTime(freq*.5,t+.18);g.gain.setValueAtTime(vol||.35,t);g.gain.exponentialRampToValueAtTime(.001,t+.18);o.start(t);o.stop(t+.2);};
-      const now=ac.currentTime;beep(now,880,'square',.35);beep(now+.22,660,'square',.35);
-      if(loud){beep(now+.44,1200,'sawtooth',.4);beep(now+.66,440,'square',.5);}
-      setTimeout(()=>{try{ac.close();}catch(e){}},1500);
+      const beep=(t,f,tp,v)=>{
+        const o=ac.createOscillator(),g=ac.createGain();
+        o.connect(g);g.connect(ac.destination);
+        o.type=tp||'square';
+        o.frequency.setValueAtTime(f,t);
+        o.frequency.exponentialRampToValueAtTime(f*.5,t+.2);
+        g.gain.setValueAtTime(v||.35,t);
+        g.gain.exponentialRampToValueAtTime(.001,t+.2);
+        o.start(t);o.stop(t+.22);
+      };
+      const n=ac.currentTime;
+      beep(n,880,'square',.4);
+      beep(n+.24,660,'square',.4);
+      if(loud){beep(n+.48,1200,'sawtooth',.5);beep(n+.72,440,'square',.5);}
+      setTimeout(()=>{try{ac.close();}catch(e){}},2000);
     }catch(e){}
   }
-  function logSuspicion(tipo,detalhe){
+
+  // ── Show alert bar ────────────────────────────────────────────
+  function logSuspicion(tipo, detalhe){
     suspCount++;
     const agora=new Date().toLocaleTimeString('pt-BR');
     playAlert(suspCount>=MAX_SUSP);
-    const bar=document.getElementById('sec-bar');
-    const num=document.getElementById('sb-num');
-    const det=document.getElementById('sb-detail');
-    const warn=document.getElementById('sb-warn');
-    const tim=document.getElementById('sb-time');
-    if(bar){bar.classList.add('show');if(suspCount>=2)bar.classList.add('pulse');}
-    if(num)num.textContent=suspCount;
-    if(det)det.textContent=detalhe+' — '+agora;
-    if(tim)tim.textContent='Infração '+suspCount+'/'+MAX_SUSP;
-    if(warn){const r=MAX_SUSP-suspCount;warn.textContent=r>0?'🚨 ATENÇÃO: MAIS '+r+' INFRAÇÃO(ÕES) E O QUIZ SERÁ ZERADO!':'🚨 LIMITE ATINGIDO — SESSÃO SENDO BLOQUEADA!';}
+
+    const bar  = document.getElementById('sec-bar');
+    const num  = document.getElementById('sb-num');
+    const det  = document.getElementById('sb-detail');
+    const warn = document.getElementById('sb-warn');
+    const tim  = document.getElementById('sb-time');
+
+    if(bar){ bar.classList.add('show'); if(suspCount>=2) bar.classList.add('pulse'); }
+    if(num)  num.textContent  = suspCount;
+    if(det)  det.textContent  = detalhe+' — '+agora;
+    if(tim)  tim.textContent  = 'Infração '+suspCount+'/'+MAX_SUSP;
+    if(warn){
+      const r=MAX_SUSP-suspCount;
+      warn.textContent = r>0
+        ? '🚨 ATENÇÃO: '+r+' INFRAÇÃO(ÕES) RESTANTE(S) — QUIZ SERÁ REINICIADO!'
+        : '🚨 LIMITE ATINGIDO — BLOQUEANDO AGORA!';
+    }
+
+    // Red flash
     const flash=document.createElement('div');
-    flash.style.cssText='position:fixed;inset:0;background:rgba(239,68,68,.15);z-index:999996;pointer-events:none;animation:flashRed .6s forwards';
-    document.body.appendChild(flash);setTimeout(()=>{try{flash.remove();}catch(e){}},700);
-    if(suspCount>=MAX_SUSP)setTimeout(triggerSecReset,600);
+    flash.style.cssText='position:fixed;inset:0;background:rgba(239,68,68,.2);z-index:9999990;pointer-events:none;animation:flashRed .6s forwards';
+    document.body.appendChild(flash);
+    setTimeout(()=>{try{flash.remove();}catch(e){}},700);
+
+    console.warn('[SEG #'+suspCount+'] '+tipo+' — '+detalhe);
+
+    if(suspCount>=MAX_SUSP) setTimeout(triggerSecReset,600);
   }
+
+  // ── Trigger reset ─────────────────────────────────────────────
   function triggerSecReset(){
     playAlert(true);
-    const ov=document.getElementById('sec-overlay');const cnt=document.getElementById('so-count');
-    if(cnt)cnt.textContent=suspCount;if(ov)ov.classList.add('show');
-    document.querySelectorAll('.opt,.go,.btn-start-quiz').forEach(b=>{b.disabled=true;b.style.pointerEvents='none';});
-  }
-  window.secConfirmReset=function(){
-    const ov=document.getElementById('sec-overlay');if(ov)ov.classList.remove('show');
-    suspCount=0;
-    const bar=document.getElementById('sec-bar');if(bar){bar.classList.remove('show','pulse');}
-    const num=document.getElementById('sb-num');if(num)num.textContent='0';
-    document.querySelectorAll('.opt,.go,.btn-start-quiz').forEach(b=>{b.disabled=false;b.style.pointerEvents='';});
-    ['ohm','pot','cap','ind','circ'].forEach(m=>{
-      const ctrl=_getCtrl(m);
-      const g=document.getElementById(m+'-gate'),q=document.getElementById(m+'-quiz');
-      if(ctrl.tent.length<MAX_TENT){if(q)q.style.display='none';if(g){g.style.display='block';renderGate(m);}}
+    const ov=document.getElementById('sec-overlay');
+    const cnt=document.getElementById('so-count');
+    if(cnt) cnt.textContent=suspCount;
+    if(ov)  ov.classList.add('show');
+    document.querySelectorAll('.opt,.go,.btn-start-quiz').forEach(b=>{
+      b.disabled=true; b.style.pointerEvents='none';
     });
-    showMod('ohm',null);
+    // Force back to fullscreen if not in it
+    setTimeout(reqFS, 500);
+  }
+
+  window.secConfirmReset=function(){
+    const ov=document.getElementById('sec-overlay');
+    if(ov) ov.classList.remove('show');
+    suspCount=0;
+    const bar=document.getElementById('sec-bar');
+    const num=document.getElementById('sb-num');
+    const warn=document.getElementById('sb-warn');
+    if(bar){ bar.classList.remove('show','pulse'); }
+    if(num)  num.textContent='0';
+    if(warn) warn.textContent='🚨 ATENÇÃO: APÓS 3 INFRAÇÕES O QUIZ SERÁ ZERADO!';
+    document.querySelectorAll('.opt,.go,.btn-start-quiz').forEach(b=>{
+      b.disabled=false; b.style.pointerEvents='';
+    });
+    ['ohm','pot','cap','ind','circ'].forEach(m=>{
+      if(typeof _getCtrl!=='undefined'){
+        const ctrl=_getCtrl(m);
+        if(ctrl.tent.length<2){
+          const q=document.getElementById(m+'-quiz');
+          const g=document.getElementById(m+'-gate');
+          if(q) q.style.display='none';
+          if(g){ g.style.display='block'; if(typeof renderGate!=='undefined') renderGate(m); }
+        }
+      }
+    });
+    if(typeof showMod!=='undefined') showMod('ohm',null);
+    reqFS();
   };
-  document.addEventListener('visibilitychange',()=>{
-    if(document.hidden){
-      const active=document.querySelector('.sec.active');
-      const sid=active?active.id:'';
-      if(['mod-ohm','mod-pot','mod-cap','mod-ind','mod-circ'].includes(sid))
-        logSuspicion('ABA_OCULTA','Aba ficou oculta durante '+sid.replace('mod-','').toUpperCase());
+
+  // ── Fullscreen management ─────────────────────────────────────
+  function reqFS(){
+    _fsRequested=true;
+    const el=document.documentElement;
+    const req=el.requestFullscreen||el.webkitRequestFullscreen
+             ||el.mozRequestFullScreen||el.msRequestFullscreen;
+    if(req) req.call(el).catch(()=>{_fsRequested=false;});
+    const btn=document.getElementById('fs-btn');
+    if(btn){ btn.textContent='✕ SAIR'; }
+  }
+
+  // Block ESC key from exiting fullscreen — force use of our button
+  window.addEventListener('keydown', e=>{
+    if(e.key==='Escape'||e.key==='F11'){
+      e.preventDefault();
+      e.stopPropagation();
+      if(isQuizActive()){
+        logSuspicion('ESC_KEY','Tecla Escape/F11 pressionada durante avaliação');
+      }
+      return false;
+    }
+  }, true); // capture phase — runs before browser default
+
+  // Detect unauthorized fullscreen exit (not via our button)
+  ['fullscreenchange','webkitfullscreenchange','mozfullscreenchange','MSFullscreenChange'].forEach(ev=>{
+    document.addEventListener(ev,()=>{
+      const isFS=!!(document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement);
+      const btn=document.getElementById('fs-btn');
+      if(isFS){
+        if(btn) btn.textContent='✕ SAIR';
+      } else {
+        if(btn) btn.textContent='⛶ TELA CHEIA';
+        // If exit was NOT triggered by our button AND quiz is active → penalize
+        if(!_exitingByButton && isQuizActive()){
+          logSuspicion('SAIU_TELA_CHEIA','Saiu da tela cheia sem usar o botão durante avaliação');
+          // Re-enter fullscreen after short delay
+          setTimeout(reqFS, 1200);
+        }
+        _exitingByButton=false;
+      }
+    });
+  });
+
+  // Override toggleFS to set flag
+  window.toggleFS=function(){
+    const isFS=!!(document.fullscreenElement||document.webkitFullscreenElement||document.mozFullScreenElement);
+    if(isFS){
+      _exitingByButton=true;
+      _fsRequested=false;
+      const ex=document.exitFullscreen||document.webkitExitFullscreen
+               ||document.mozCancelFullScreen||document.msExitFullscreen;
+      if(ex) ex.call(document).catch(()=>{});
+      const btn=document.getElementById('fs-btn');
+      if(btn) btn.textContent='⛶ TELA CHEIA';
+    } else {
+      reqFS();
+    }
+  };
+
+  // ── 1. COPY / CUT — direct intention ─────────────────────────
+  document.addEventListener('copy',e=>{
+    e.preventDefault();
+    logSuspicion('CÓPIA','Tentativa de copiar conteúdo (Ctrl+C)');
+  });
+  document.addEventListener('cut',e=>{
+    e.preventDefault();
+    logSuspicion('RECORTAR','Tentativa de recortar conteúdo (Ctrl+X)');
+  });
+
+  // ── 2. CONTEXT MENU (right click / long press menu) ───────────
+  document.addEventListener('contextmenu',e=>{
+    e.preventDefault();
+    logSuspicion('MENU_DIREITO','Menu de contexto aberto (botão direito / toque longo)');
+  });
+
+  // ── 3. KEYBOARD shortcuts ─────────────────────────────────────
+  document.addEventListener('keydown',e=>{
+    const ctrl=e.ctrlKey||e.metaKey;
+    if(ctrl){
+      const k=e.key.toLowerCase();
+      if(k==='c'){e.preventDefault();logSuspicion('CTRL+C','Atalho de cópia');}
+      else if(k==='x'){e.preventDefault();logSuspicion('CTRL+X','Atalho de recortar');}
+      else if(k==='u'){e.preventDefault();logSuspicion('CTRL+U','Ver código-fonte');}
+      else if(k==='p'){e.preventDefault();logSuspicion('CTRL+P','Tentativa de imprimir/capturar');}
+      else if(k==='s'){e.preventDefault();}
+      else if(k==='a'){e.preventDefault();logSuspicion('CTRL+A','Selecionar tudo');}
+    }
+    if(e.key==='PrintScreen'){logSuspicion('PRINTSCREEN','Captura de tela (PrintScreen)');}
+    if(e.key==='F12'||(e.ctrlKey&&e.shiftKey&&['I','J','C'].includes(e.key))){
+      e.preventDefault();logSuspicion('DEVTOOLS','Tentativa de abrir DevTools');
+    }
+    // Screenshot on Mac: Cmd+Shift+3/4/5
+    if(e.metaKey&&e.shiftKey&&['3','4','5'].includes(e.key)){
+      e.preventDefault();logSuspicion('SCREENSHOT_MAC','Atalho de captura de tela (Mac)');
     }
   });
+
+  // ── 4. VISIBILITY CHANGE (tab switch / minimize / app switch) ─
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden && isQuizActive()){
+      logSuspicion('ABA_OCULTA','Aba/janela ocultada durante avaliação (troca de app ou minimizar)');
+    }
+  });
+
+  // ── 5. WINDOW BLUR (Alt+Tab, click outside window) ─────────────
+  // Throttled to avoid spam
+  let _blurTimer=null;
   window.addEventListener('blur',()=>{
-    const active=document.querySelector('.sec.active');
-    const sid=active?active.id:'';
-    if(['mod-ohm','mod-pot','mod-cap','mod-ind','mod-circ'].includes(sid))
-      logSuspicion('JANELA_FOCO','Janela perdeu foco durante '+sid.replace('mod-','').toUpperCase());
+    if(!isQuizActive()) return;
+    clearTimeout(_blurTimer);
+    _blurTimer=setTimeout(()=>{
+      if(!document.hasFocus() && isQuizActive()){
+        logSuspicion('FOCO_PERDIDO','Janela perdeu o foco (Alt+Tab ou clique fora)');
+      }
+    }, 800); // 800ms grace period to avoid false positives on tab interactions
   });
-  document.addEventListener('contextmenu',e=>{e.preventDefault();logSuspicion('MENU_DIREITO','Botão direito pressionado');return false;});
-  document.addEventListener('copy',e=>{e.preventDefault();logSuspicion('COPIA','Tentativa de copiar conteúdo (Ctrl+C)');});
-  document.addEventListener('keydown',e=>{
-    if((e.ctrlKey||e.metaKey)&&['c','u','s','a','p'].includes(e.key.toLowerCase())){e.preventDefault();if(e.key.toLowerCase()==='p')logSuspicion('IMPRESSAO','Ctrl+P detectado');else if(e.key.toLowerCase()==='u')logSuspicion('CODIGO_FONTE','Ctrl+U detectado');}
-    if(e.key==='PrintScreen')logSuspicion('PRINTSCREEN','Captura de tela detectada');
-    if(e.key==='F12'||(e.ctrlKey&&e.shiftKey&&['I','J','C'].includes(e.key))){e.preventDefault();logSuspicion('DEVTOOLS','Tentativa de abrir DevTools');}
+  window.addEventListener('focus',()=>clearTimeout(_blurTimer));
+
+  // ── 6. PAGE HIDE (back button, close tab, navigate away) ───────
+  window.addEventListener('pagehide',()=>{
+    if(isQuizActive()){
+      // Best-effort: try to log (may not fire in all cases)
+      logSuspicion('SAIU_PAGINA','Aluno saiu da página durante avaliação');
+    }
   });
-  let lpt=null;
-  document.addEventListener('touchstart',e=>{if(e.target.tagName==='IMG'||e.target.tagName==='CANVAS'){lpt=setTimeout(()=>logSuspicion('LONG_PRESS','Toque longo em imagem'),600);}},{passive:true});
-  document.addEventListener('touchend',()=>{clearTimeout(lpt);},{passive:true});
-  document.addEventListener('touchmove',()=>{clearTimeout(lpt);},{passive:true});
-  document.addEventListener('dragstart',e=>{if(e.target.tagName==='IMG'){e.preventDefault();logSuspicion('ARRASTAR_IMG','Arrastar imagem');}});
-  const ps=document.createElement('style');ps.textContent='@media print{body{display:none!important}}';document.head.appendChild(ps);
+
+  // ── 7. BEFORE UNLOAD (tab close / navigate) ────────────────────
+  window.addEventListener('beforeunload',e=>{
+    if(isQuizActive()){
+      e.preventDefault();
+      e.returnValue='⚠️ Você tem uma avaliação em andamento. Tem certeza que deseja sair?';
+      return e.returnValue;
+    }
+  });
+
+  // ── 8. GOOGLE LENS — Mobile long-press ─────────────────────────
+  // Block ANY long press anywhere on page during quiz
+  let _lpt=null;
+  let _touchStartX=0, _touchStartY=0;
+
+  document.addEventListener('touchstart',e=>{
+    _touchStartX=e.touches[0].clientX;
+    _touchStartY=e.touches[0].clientY;
+    // Long press = holding finger > 600ms without moving
+    _lpt=setTimeout(()=>{
+      if(isQuizActive()){
+        logSuspicion('LONG_PRESS','Toque longo detectado — possível Google Lens ou menu de contexto');
+        // Cancel the touch to prevent the context menu
+        document.dispatchEvent(new TouchEvent('touchend'));
+      }
+    },600);
+  },{passive:true});
+
+  document.addEventListener('touchend',  ()=>clearTimeout(_lpt),{passive:true});
+  document.addEventListener('touchcancel',()=>clearTimeout(_lpt),{passive:true});
+  document.addEventListener('touchmove',e=>{
+    // If finger moved more than 10px → it's a scroll, not a long press
+    const dx=Math.abs(e.touches[0].clientX-_touchStartX);
+    const dy=Math.abs(e.touches[0].clientY-_touchStartY);
+    if(dx>10||dy>10) clearTimeout(_lpt);
+  },{passive:true});
+
+  // Block touchstart on images (direct lens trigger)
+  document.addEventListener('touchstart',e=>{
+    if(e.target.tagName==='IMG'||e.target.tagName==='CANVAS'||e.target.tagName==='SVG'){
+      e.preventDefault();
+    }
+  },{passive:false});
+
+  // ── 9. DRAG (desktop Google Lens / copy-image) ─────────────────
+  document.addEventListener('dragstart',e=>{
+    e.preventDefault();
+    if(isQuizActive()){
+      logSuspicion('ARRASTAR','Tentativa de arrastar elemento (possível captura de imagem)');
+    }
+  });
+
+  // ── 10. POINTER LOCK EXIT (some screen capture tools) ──────────
+  document.addEventListener('pointerlockchange',()=>{
+    if(!document.pointerLockElement && isQuizActive()){
+      // Subtle — don't penalize but log
+      console.warn('[SEG] Pointer lock released');
+    }
+  });
+
+  // ── 11. PRINT ─────────────────────────────────────────────────
+  const ps=document.createElement('style');
+  ps.textContent='@media print{body{display:none!important}}';
+  document.head.appendChild(ps);
+
+  window.addEventListener('beforeprint',()=>{
+    if(isQuizActive()) logSuspicion('IMPRIMIR','Tentativa de imprimir durante avaliação');
+  });
+
+  // ── 12. DEVTOOLS DETECTION (timing) ────────────────────────────
+  // Only checks every 5s and only if quiz is active
+  let _devOpen=false;
+  setInterval(()=>{
+    if(!isQuizActive()) return;
+    const t=performance.now();
+    debugger; // In DevTools, this takes >100ms
+    if(performance.now()-t>100&&!_devOpen){
+      _devOpen=true;
+      logSuspicion('DEVTOOLS_OPEN','Ferramentas de desenvolvedor abertas');
+    } else if(performance.now()-t<=100){
+      _devOpen=false;
+    }
+  },5000);
+
+  // Export
   window.logSuspicion=logSuspicion;
+  window.getSuspicions=()=>({count:suspCount});
+  window._reqFS=reqFS;
 })();
 
 // ══ INIT ══════════════════════════════════════════════════════════
