@@ -10,6 +10,76 @@
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth;font-size:1.05rem}
 body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;overflow-x:hidden;line-height:1.75;-webkit-user-select:none;user-select:none}
+/* ── WATERMARK ── */
+#wm-layer{position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:8888;overflow:hidden;opacity:.08;display:flex;flex-wrap:wrap;justify-content:space-around;align-content:space-around}
+.wm-txt{font-size:20px;font-weight:bold;color:#fff;transform:rotate(-28deg);white-space:nowrap;padding:30px;font-family:Orbitron,monospace;letter-spacing:1px}
+/* ── BLUR BLOCKS (exemplos — hover puro) ── */
+.blur-block{filter:blur(6px);transition:filter .12s ease;border-radius:6px;user-select:none;-webkit-user-select:none;cursor:default}
+.blur-block:hover{filter:blur(0)}
+/* ── QUIZ: PARTE 1 e PARTE 2 — hover individual ── */
+.q-part{
+  filter:blur(8px);transition:filter .18s ease;
+  border-radius:8px;padding:12px 16px;margin-bottom:10px;
+  user-select:none;-webkit-user-select:none;
+  cursor:default;position:relative;
+  background:rgba(0,245,255,.03);
+  border:1px solid rgba(0,245,255,.1);
+  line-height:1.75;font-size:1.05rem;
+}
+.q-part:hover{filter:blur(0);border-color:rgba(0,245,255,.25);background:rgba(0,245,255,.04)}
+.q-part-label{
+  font-family:Orbitron,monospace;font-size:.56rem;letter-spacing:1.5px;
+  color:var(--neon3);margin-bottom:8px;display:block;opacity:.85;
+}
+/* ── ALTERNATIVAS — cada botão individualmente ofuscado ── */
+.opt-wrap{
+  filter:blur(7px);transition:filter .15s ease;
+  border-radius:7px;margin-bottom:7px;
+  user-select:none;-webkit-user-select:none;cursor:default;
+  position:relative;
+}
+.opt-wrap:hover{filter:blur(0)}
+/* Após seleção: alternativa escolhida sempre visível, demais voltam ao blur */
+.opt-wrap.chosen{filter:blur(0)!important;cursor:default}
+.opt-wrap.unchosen{filter:blur(6px)}
+.opt-wrap.unchosen:hover{filter:blur(0)}
+/* Hint tooltip no hover */
+.opt-wrap::after{
+  content:'👆 duplo clique para confirmar';
+  position:absolute;bottom:-14px;right:6px;
+  font-size:.52rem;color:var(--neon3);letter-spacing:.5px;
+  opacity:0;transition:opacity .2s;pointer-events:none;
+  font-family:Orbitron,monospace;
+}
+.opt-wrap:hover::after{opacity:.7}
+.opt-wrap.chosen::after{content:'✔ selecionada — clique em outra para trocar';color:var(--gold);opacity:.7}
+/* hint bar acima das alternativas */
+.opts-hint{
+  font-family:Orbitron,monospace;font-size:.56rem;
+  color:var(--txt2);letter-spacing:1px;
+  margin:10px 0 5px;opacity:.7;
+  display:flex;align-items:center;gap:6px;
+}
+.opts-hint::before{content:'';flex:1;height:1px;background:rgba(0,245,255,.1)}
+.opts-hint::after{content:'';flex:1;height:1px;background:rgba(0,245,255,.1)}
+img,svg,canvas{-webkit-user-drag:none!important;user-select:none!important;-webkit-user-select:none!important;pointer-events:none!important;-webkit-touch-callout:none!important}
+/* Inputs normais podem usar pointer-events, mas botões dentro de opt-wrap controlados por blur */
+input,textarea,select{pointer-events:auto!important}
+/* opt-wrap: blurred até hover — pointer-events controlado explicitamente */
+.opt-wrap .opt{pointer-events:none!important;margin-bottom:0!important;width:100%}
+.opt-wrap:hover .opt{pointer-events:auto!important}
+/* ── EXPANDABLE EXAMPLES ── */
+.ex-box{margin-bottom:18px;border-radius:10px;overflow:hidden;border:1px solid rgba(0,245,255,.15)}
+.ex-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer;user-select:none;transition:background .2s;font-family:Orbitron,monospace;font-size:.72rem;letter-spacing:.8px}
+.ex-header:hover{background:rgba(0,245,255,.06)}
+.ex-chevron{transition:transform .28s;font-size:.9rem;flex-shrink:0}
+.ex-body{display:none;padding:0 14px 14px}
+.ex-step{margin-top:10px;padding:10px 12px;background:rgba(255,255,255,.02);border-radius:7px;border-left:3px solid rgba(0,245,255,.25);font-size:.93rem;line-height:1.7}
+.ex-step strong{color:var(--neon)}
+.ex-result{margin-top:10px;padding:10px 14px;background:rgba(0,245,255,.05);border-radius:7px;font-size:.95rem;border:1px solid rgba(0,245,255,.2)}
+.ex-tip{margin-top:8px;padding:8px 12px;background:rgba(251,191,36,.05);border-radius:6px;font-size:.83rem;color:var(--txt2);border-left:3px solid rgba(251,191,36,.3)}
+.ex-box[data-open="1"] .ex-chevron{transform:rotate(180deg)}
+.ex-box[data-open="1"] .ex-body{display:block}
 /* Block Google Lens / screenshot attempts on all images */
 img,svg,canvas{
   -webkit-user-select:none!important;user-select:none!important;
@@ -257,6 +327,7 @@ footer strong{color:var(--neon)}
 </style>
 </head>
 <body>
+<div id="wm-layer"></div>
 
 <!-- ═══ HEADER ═══ -->
 <header>
@@ -552,6 +623,83 @@ if(typeof window.showSci === 'undefined'){
 <div class="slider-row"><label>Tensão U (V) <span id="o-uv">12 V</span></label><input type="range" id="o-u" min="1" max="220" value="12" oninput="sOhm()"></div>
 
 
+
+<!-- ── EXEMPLOS RESOLVIDOS — PASSO A PASSO ─────────────────────── -->
+<div class="card" style="margin-top:20px">
+<h3>📐 Exemplos Resolvidos — Clique para expandir cada resolução</h3>
+<p style="font-size:.88rem;color:var(--neon3);margin-bottom:14px">👇 Clique num exemplo para abrir. Os passos aparecem um de cada vez — ideal para estudar antes da avaliação.</p>
+
+<!-- Exemplo 1 -->
+<div class="ex-box" data-open="0" style="background:rgba(0,245,255,.02)">
+<div class="ex-header" onclick="toggleEx(this)" style="color:var(--neon)">
+  <span>📘 EXEMPLO 1 — Lei de Ohm: calculando corrente (chuveiro elétrico)</span>
+  <span class="ex-chevron">▼</span>
+</div>
+<div class="ex-body">
+  <div class="ex-step"><strong>🔍 Situação real:</strong> Você instalou um chuveiro de <strong>15 Ω</strong> na tomada de <strong>45 V</strong> de um trailer. O eletricista pede a corrente para dimensionar o fio.</div>
+  <div class="ex-step"><strong>📌 Passo 1 — Identificar os dados:</strong><br>→ Tensão: <strong>U = 45 V</strong><br>→ Resistência: <strong>R = 15 Ω</strong><br>→ Incógnita: corrente I = ?</div>
+  <div class="ex-step"><strong>📌 Passo 2 — Aplicar a 1ª Lei de Ohm:</strong><br>I = U ÷ R<br>I = 45 ÷ 15</div>
+  <div class="ex-result">✅ <strong style="color:var(--neon)">I = 3 A</strong></div>
+  <div class="ex-step"><strong>📌 Passo 3 — Verificar a unidade:</strong><br>[V] ÷ [Ω] = [A] ✓<br>O fio deve suportar ao menos 3 A — um fio 2,5 mm² serve perfeitamente.</div>
+  <div class="ex-tip">💡 <strong>Dica anti-erro:</strong> Nunca confunda I = U/R com I = R/U. Resistência no denominador — maior R significa menor corrente.</div>
+</div>
+</div>
+
+<!-- Exemplo 2 -->
+<div class="ex-box" data-open="0" style="background:rgba(251,191,36,.02)">
+<div class="ex-header" onclick="toggleEx(this)" style="color:var(--gold)">
+  <span>📘 EXEMPLO 2 — Circuito em série (instalação de sala)</span>
+  <span class="ex-chevron">▼</span>
+</div>
+<div class="ex-body">
+  <div class="ex-step"><strong>🔍 Situação real:</strong> Dois resistores de aquecimento R₁ = 8 Ω e R₂ = 12 Ω estão ligados em <strong>série</strong> numa fonte de U = 40 V. O técnico quer saber a corrente total e a queda de tensão em R₁.</div>
+  <div class="ex-step"><strong>📌 Passo 1 — Resistência equivalente em série:</strong><br>Em série, simplesmente somamos:<br>Req = R₁ + R₂ = 8 + 12 = <strong>20 Ω</strong></div>
+  <div class="ex-step"><strong>📌 Passo 2 — Corrente total (igual em todo o circuito série):</strong><br>I = U ÷ Req = 40 ÷ 20 = <strong>2 A</strong><br>⚠️ Em série, a mesma corrente passa por todos os componentes.</div>
+  <div class="ex-step"><strong>📌 Passo 3 — Queda de tensão em R₁:</strong><br>U₁ = R₁ × I = 8 × 2 = <strong>16 V</strong></div>
+  <div class="ex-result">✅ Req = 20 Ω &nbsp;·&nbsp; I = 2 A &nbsp;·&nbsp; U₁ = 16 V</div>
+  <div class="ex-tip">💡 Verificação: U₂ = 12 × 2 = 24 V → U₁ + U₂ = 16 + 24 = 40 V ✓ (a soma das quedas deve igualar a tensão da fonte)</div>
+</div>
+</div>
+
+<!-- Exemplo 3 -->
+<div class="ex-box" data-open="0" style="background:rgba(168,85,247,.02)">
+<div class="ex-header" onclick="toggleEx(this)" style="color:var(--neon3)">
+  <span>📘 EXEMPLO 3 — Circuito em paralelo (lâmpadas residenciais)</span>
+  <span class="ex-chevron">▼</span>
+</div>
+<div class="ex-body">
+  <div class="ex-step"><strong>🔍 Situação real:</strong> Duas lâmpadas com resistências R₁ = 6 Ω e R₂ = 12 Ω estão ligadas em <strong>paralelo</strong> na rede de 24 V. Queremos Req, corrente total e corrente em cada lâmpada.</div>
+  <div class="ex-step"><strong>📌 Passo 1 — Req em paralelo (fórmula inversa):</strong><br>1/Req = 1/R₁ + 1/R₂ = 1/6 + 1/12 = 2/12 + 1/12 = 3/12<br>Req = 12/3 = <strong>4 Ω</strong></div>
+  <div class="ex-step"><strong>📌 Passo 2 — Corrente total da fonte:</strong><br>It = U ÷ Req = 24 ÷ 4 = <strong>6 A</strong></div>
+  <div class="ex-step"><strong>📌 Passo 3 — Corrente em cada ramo (mesma tensão em paralelo):</strong><br>I₁ = U/R₁ = 24/6 = <strong>4 A</strong><br>I₂ = U/R₂ = 24/12 = <strong>2 A</strong></div>
+  <div class="ex-result">✅ Req = 4 Ω &nbsp;·&nbsp; It = 6 A &nbsp;·&nbsp; I₁ = 4 A &nbsp;·&nbsp; I₂ = 2 A</div>
+  <div class="ex-tip">💡 <strong>Regra de ouro do paralelo:</strong> Req é sempre <em>menor</em> que o menor resistor. Aqui R₂ = 12 Ω, mas Req = 4 Ω. Se der Req > algum dos R, refaça!</div>
+</div>
+</div>
+
+<!-- Exemplo 4 -->
+<div class="ex-box" data-open="0" style="background:rgba(34,197,94,.02)">
+<div class="ex-header" onclick="toggleEx(this)" style="color:var(--green)">
+  <span>📘 EXEMPLO 4 — Circuito misto (bancada de laboratório)</span>
+  <span class="ex-chevron">▼</span>
+</div>
+<div class="ex-body">
+  <div class="ex-step"><strong>🔍 Situação real:</strong> Uma bancada de testes usa R₁ = 4 Ω em série com dois resistores em paralelo: R₂ = 6 Ω e R₃ = 12 Ω. Fonte U = 36 V. Encontre Req, It e correntes em cada resistor.</div>
+  <div class="ex-step"><strong>📌 Passo 1 — Resolver o paralelo de R₂ e R₃:</strong><br>Rp = (R₂ × R₃)/(R₂ + R₃) = (6 × 12)/(6 + 12) = 72/18 = <strong>4 Ω</strong></div>
+  <div class="ex-step"><strong>📌 Passo 2 — Req total (série R₁ + Rp):</strong><br>Req = R₁ + Rp = 4 + 4 = <strong>8 Ω</strong></div>
+  <div class="ex-step"><strong>📌 Passo 3 — Corrente total:</strong><br>It = U/Req = 36/8 = <strong>4,5 A</strong></div>
+  <div class="ex-step"><strong>📌 Passo 4 — Tensão no paralelo:</strong><br>U_par = It × Rp = 4,5 × 4 = <strong>18 V</strong><br>Verificação: U_R1 = It × R₁ = 4,5 × 4 = 18 V → U_R1 + U_par = 36 V ✓</div>
+  <div class="ex-step"><strong>📌 Passo 5 — Correntes individuais no paralelo:</strong><br>I₂ = U_par/R₂ = 18/6 = <strong>3 A</strong><br>I₃ = U_par/R₃ = 18/12 = <strong>1,5 A</strong></div>
+  <div class="ex-result">✅ Req = 8 Ω &nbsp;·&nbsp; It = 4,5 A &nbsp;·&nbsp; I₂ = 3 A &nbsp;·&nbsp; I₃ = 1,5 A</div>
+  <div class="ex-tip">💡 Verificação final: I₂ + I₃ = 3 + 1,5 = 4,5 A = It ✓ As correntes dos ramos paralelos somam a corrente total.</div>
+</div>
+</div>
+
+</div>
+
+
+<!-- ── FIM EXEMPLOS OHM ── -->
+
 <!-- QUIZ OHM -->
 <div class="qmod-wrap">
 <div class="qmod-title">📝 QUIZ — LEI DE OHM</div>
@@ -601,6 +749,58 @@ if(typeof window.showSci === 'undefined'){
 <div class="metric"><span class="l">R$/mês</span><span class="v" id="l-cr" style="color:var(--gold)">4.11</span></div>
 </div></div></div></div>
 </div></div>
+
+<!-- ── EXEMPLOS RESOLVIDOS — POTÊNCIA ──────────────────────────── -->
+<div class="card" style="margin-top:20px">
+<h3>📐 Exemplos Resolvidos — Potência Elétrica</h3>
+<p style="font-size:.88rem;color:var(--neon3);margin-bottom:14px">👇 Clique para expandir a resolução passo a passo.</p>
+
+<div class="ex-box" data-open="0" style="background:rgba(0,245,255,.02)">
+<div class="ex-header" onclick="toggleEx(this)" style="color:var(--neon)">
+  <span>📘 EXEMPLO 1 — P = U·I (chuveiro elétrico em casa)</span>
+  <span class="ex-chevron">▼</span>
+</div>
+<div class="ex-body">
+  <div class="ex-step"><strong>🔍 Contexto:</strong> O chuveiro da sua casa opera a 220 V e consome 25 A. Calcule a potência e estime a conta de luz mensal (20 min/dia).</div>
+  <div class="ex-step"><strong>📌 Passo 1 — Identificar dados:</strong><br>U = 220 V &nbsp;·&nbsp; I = 25 A &nbsp;·&nbsp; P = ?</div>
+  <div class="ex-step"><strong>📌 Passo 2 — Calcular potência:</strong><br>P = U × I = 220 × 25 = <strong>5.500 W = 5,5 kW</strong></div>
+  <div class="ex-step"><strong>📌 Passo 3 — Calcular consumo mensal:</strong><br>t = 20 min × 30 dias = 600 min = <strong>10 horas</strong><br>E = P × t = 5,5 kW × 10 h = <strong>55 kWh</strong></div>
+  <div class="ex-result">✅ P = 5.500 W &nbsp;·&nbsp; Consumo = 55 kWh/mês ≈ R$ 46,75 (a R$0,85/kWh)</div>
+  <div class="ex-tip">💡 Chuveiro é o maior consumidor residencial médio. 55 kWh representa ~30% da conta de uma família de 4 pessoas.</div>
+</div>
+</div>
+
+<div class="ex-box" data-open="0" style="background:rgba(251,191,36,.02)">
+<div class="ex-header" onclick="toggleEx(this)" style="color:var(--gold)">
+  <span>📘 EXEMPLO 2 — P = R·I² (risco de incêndio por sobrecarga)</span>
+  <span class="ex-chevron">▼</span>
+</div>
+<div class="ex-body">
+  <div class="ex-step"><strong>🔍 Contexto:</strong> Um resistor de 20 Ω foi projetado para 3 A. Por engano, aplica-se 6 A. Calcule a potência em cada caso e avalie o risco.</div>
+  <div class="ex-step"><strong>📌 Situação normal (I = 3 A):</strong><br>P = R × I² = 20 × (3)² = 20 × 9 = <strong>180 W</strong></div>
+  <div class="ex-step"><strong>📌 Situação de sobrecarga (I = 6 A):</strong><br>P_nova = 20 × (6)² = 20 × 36 = <strong>720 W</strong></div>
+  <div class="ex-result">⚠️ Corrente dobrou → Potência ficou <strong>4× maior</strong> (720 W vs 180 W)</div>
+  <div class="ex-tip">💡 <strong>Por que P=R·I² é mais perigosa que parece:</strong> dobrar a corrente <em>quadruplica</em> o calor gerado. É por isso que sobrecargas provocam incêndios em fiações.</div>
+</div>
+</div>
+
+<div class="ex-box" data-open="0" style="background:rgba(168,85,247,.02)">
+<div class="ex-header" onclick="toggleEx(this)" style="color:var(--neon3)">
+  <span>📘 EXEMPLO 3 — Série vs Paralelo: quem aquece mais?</span>
+  <span class="ex-chevron">▼</span>
+</div>
+<div class="ex-body">
+  <div class="ex-step"><strong>🔍 Contexto:</strong> R₁ = 4 Ω e R₂ = 8 Ω estão em série com U = 24 V. Em qual resistor o aquecimento é maior? Por quê?</div>
+  <div class="ex-step"><strong>📌 Passo 1 — Corrente (mesma em série):</strong><br>Req = 4 + 8 = 12 Ω &nbsp;→&nbsp; I = 24/12 = <strong>2 A</strong></div>
+  <div class="ex-step"><strong>📌 Passo 2 — Potência em cada resistor:</strong><br>P₁ = R₁ × I² = 4 × 4 = <strong>16 W</strong><br>P₂ = R₂ × I² = 8 × 4 = <strong>32 W</strong></div>
+  <div class="ex-result">✅ R₂ (maior resistência) dissipa o dobro: 32 W vs 16 W</div>
+  <div class="ex-tip">💡 <strong>Regra em série:</strong> maior R → mais calor (P = R·I², corrente igual). <strong>Em paralelo é o contrário:</strong> menor R → mais corrente → mais calor.</div>
+</div>
+</div>
+
+</div>
+<!-- ── FIM EXEMPLOS POT ── -->
+
 <!-- QUIZ POT -->
 <div class="qmod-wrap">
 <div class="qmod-title">📝 QUIZ — POTÊNCIA ELÉTRICA</div>
@@ -645,6 +845,56 @@ if(typeof window.showSci === 'undefined'){
 <div class="metric"><span class="l">Carga Q (mC)</span><span class="v" id="c-qr">2.40</span></div>
 <div class="metric w"><span class="l">Energia (mJ)</span><span class="v" id="c-er">28.8</span></div></div></div>
 </div></div>
+
+<div class="card" style="margin-top:20px">
+<h3>📐 Exemplos Resolvidos — Capacitores</h3>
+<p style="font-size:.88rem;color:var(--neon3);margin-bottom:14px">👇 Clique para expandir.</p>
+
+<div class="ex-box" data-open="0" style="background:rgba(168,85,247,.02)">
+<div class="ex-header" onclick="toggleEx(this)" style="color:var(--neon3)">
+  <span>📘 EXEMPLO 1 — Carga e energia (capacitor de desfibrilador)</span>
+  <span class="ex-chevron">▼</span>
+</div>
+<div class="ex-body">
+  <div class="ex-step"><strong>🔍 Contexto:</strong> Um desfibrilador usa capacitor de 470 μF carregado a 50 V. Calcule a carga armazenada e a energia disponível para o choque.</div>
+  <div class="ex-step"><strong>📌 Passo 1 — Carga:</strong><br>Q = C × U = 470×10⁻⁶ × 50 = <strong>0,0235 C = 23,5 mC</strong></div>
+  <div class="ex-step"><strong>📌 Passo 2 — Energia:</strong><br>E = ½ × C × U² = 0,5 × 470×10⁻⁶ × 2500 = <strong>587,5 mJ</strong></div>
+  <div class="ex-step"><strong>📌 Passo 3 — E se dobrar para 100 V?</strong><br>E_nova = ½ × 470×10⁻⁶ × 10000 = 2,35 J → <strong>Energia ficou 4× maior</strong></div>
+  <div class="ex-result">✅ Q = 23,5 mC &nbsp;·&nbsp; E = 587,5 mJ a 50 V</div>
+  <div class="ex-tip">💡 Desfibriladores carregam em ~5 s e descarregam em ~10 ms. A rapidez da descarga gera o pulso que reinicia o coração.</div>
+</div>
+</div>
+
+<div class="ex-box" data-open="0" style="background:rgba(0,245,255,.02)">
+<div class="ex-header" onclick="toggleEx(this)" style="color:var(--neon)">
+  <span>📘 EXEMPLO 2 — Série vs paralelo: quando usar cada um?</span>
+  <span class="ex-chevron">▼</span>
+</div>
+<div class="ex-body">
+  <div class="ex-step"><strong>🔍 Contexto:</strong> Você tem C₁ = 10 μF e C₂ = 40 μF. Precisa de maior capacitância? Paralelo. Suportar tensão maior? Série.</div>
+  <div class="ex-step"><strong>📌 Série:</strong><br>1/Ceq = 1/10 + 1/40 = 5/40 → Ceq = <strong>8 μF</strong> (menor que o menor C!)</div>
+  <div class="ex-step"><strong>📌 Paralelo:</strong><br>Ceq = 10 + 40 = <strong>50 μF</strong> (maior que o maior C)</div>
+  <div class="ex-result">✅ Série: 8 μF (tensão dividida) &nbsp;·&nbsp; Paralelo: 50 μF (carga somada)</div>
+  <div class="ex-tip">💡 <strong>Inversão vs resistores:</strong> em capacitores o paralelo é que soma e a série que divide — exatamente o oposto dos resistores!</div>
+</div>
+</div>
+
+<div class="ex-box" data-open="0" style="background:rgba(251,191,36,.02)">
+<div class="ex-header" onclick="toggleEx(this)" style="color:var(--gold)">
+  <span>📘 EXEMPLO 3 — Constante de tempo RC (pisca-pisca / temporizador)</span>
+  <span class="ex-chevron">▼</span>
+</div>
+<div class="ex-body">
+  <div class="ex-step"><strong>🔍 Contexto:</strong> Um circuito pisca-pisca usa R = 22 kΩ e C = 100 μF. Qual o tempo de cada ciclo de carga?</div>
+  <div class="ex-step"><strong>📌 τ = R × C:</strong><br>τ = 22×10³ × 100×10⁻⁶ = <strong>2,2 s</strong></div>
+  <div class="ex-step"><strong>📌 Carga praticamente completa:</strong><br>t = 5τ = 11 s → capacitor 99,3% carregado</div>
+  <div class="ex-result">✅ τ = 2,2 s &nbsp;·&nbsp; Carga completa em ~11 s</div>
+  <div class="ex-tip">💡 Menor τ (R ou C menores) = pisca mais rápido. Este princípio está em temporizadores, filtros de áudio e memória DRAM.</div>
+</div>
+</div>
+
+</div>
+
 <!-- QUIZ CAP -->
 <div class="qmod-wrap">
 <div class="qmod-title">📝 QUIZ — CAPACITORES</div>
@@ -690,6 +940,55 @@ if(typeof window.showSci === 'undefined'){
 </svg>
 <div class="metrics"><div class="metric w"><span class="l">Reatância XL</span><span class="v" id="i-xl">37.7 Ω</span></div><div class="metric"><span class="l">Energia (mJ)</span><span class="v" id="i-en">450</span></div><div class="metric"><span class="l">τ = L/R (ms)</span><span class="v" id="i-tau">10.0</span></div></div></div>
 </div></div>
+
+<div class="card" style="margin-top:20px">
+<h3>📐 Exemplos Resolvidos — Indutores</h3>
+<p style="font-size:.88rem;color:var(--neon3);margin-bottom:14px">👇 Clique para expandir.</p>
+
+<div class="ex-box" data-open="0" style="background:rgba(0,245,255,.02)">
+<div class="ex-header" onclick="toggleEx(this)" style="color:var(--neon)">
+  <span>📘 EXEMPLO 1 — Reatância XL (filtro de áudio)</span>
+  <span class="ex-chevron">▼</span>
+</div>
+<div class="ex-body">
+  <div class="ex-step"><strong>🔍 Contexto:</strong> Um filtro de caixa de som usa bobina de 200 mH para bloquear agudos (CA de 60 Hz). Calcule a reatância indutiva.</div>
+  <div class="ex-step"><strong>📌 Fórmula:</strong><br>XL = 2π × f × L = 2π × 60 × 0,2</div>
+  <div class="ex-step"><strong>📌 Cálculo:</strong><br>XL = 2 × 3,14159 × 60 × 0,2 = <strong>75,4 Ω</strong></div>
+  <div class="ex-step"><strong>📌 E se dobrar a frequência (120 Hz)?</strong><br>XL_nova = 2π × 120 × 0,2 = 150,8 Ω → <strong>XL dobrou</strong> (XL ∝ f)</div>
+  <div class="ex-result">✅ XL = 75,4 Ω a 60 Hz &nbsp;·&nbsp; Frequência maior = mais bloqueio</div>
+  <div class="ex-tip">💡 Por isso indutores funcionam como filtros passa-baixa: deixam graves passarem (baixa f, baixo XL) e bloqueiam agudos (alta f, alto XL).</div>
+</div>
+</div>
+
+<div class="ex-box" data-open="0" style="background:rgba(251,191,36,.02)">
+<div class="ex-header" onclick="toggleEx(this)" style="color:var(--gold)">
+  <span>📘 EXEMPLO 2 — Energia em campo magnético (motor elétrico)</span>
+  <span class="ex-chevron">▼</span>
+</div>
+<div class="ex-body">
+  <div class="ex-step"><strong>🔍 Contexto:</strong> A bobina de campo de um motor elétrico tem L = 500 mH e opera com I = 4 A. Qual energia está armazenada no campo magnético?</div>
+  <div class="ex-step"><strong>📌 E = ½ · L · I²:</strong><br>E = 0,5 × 0,5 H × (4)² = 0,5 × 0,5 × 16 = <strong>4 J</strong></div>
+  <div class="ex-step"><strong>📌 E se triplicar a corrente para 12 A?</strong><br>E_nova = 0,5 × 0,5 × (12)² = 0,5 × 0,5 × 144 = 36 J<br><strong>Energia ficou 9× maior</strong> (corrente triplicou → E ×9)</div>
+  <div class="ex-result">✅ E = 4 J a 4 A &nbsp;·&nbsp; Triplicar I → 9× mais energia</div>
+  <div class="ex-tip">💡 A energia armazenada na bobina do motor é o que mantém a rotação por brevíssimos instantes mesmo sem alimentação. Esse efeito é essencial nos freios regenerativos de veículos elétricos.</div>
+</div>
+</div>
+
+<div class="ex-box" data-open="0" style="background:rgba(168,85,247,.02)">
+<div class="ex-header" onclick="toggleEx(this)" style="color:var(--neon3)">
+  <span>📘 EXEMPLO 3 — Constante de tempo RL (bobina de ignição)</span>
+  <span class="ex-chevron">▼</span>
+</div>
+<div class="ex-body">
+  <div class="ex-step"><strong>🔍 Contexto:</strong> A bobina de ignição de um carro tem L = 100 mH e a resistência da vela é R = 5 Ω. Calcule τ e interprete o que acontece na centelha.</div>
+  <div class="ex-step"><strong>📌 τ = L/R:</strong><br>τ = 0,1 / 5 = <strong>20 ms</strong></div>
+  <div class="ex-step"><strong>📌 FEM induzida na interrupção:</strong><br>ε = −L × dI/dt<br>Se a corrente de 4 A é interrompida em 0,1 ms:<br>dI/dt = 4 / 0,0001 = 40.000 A/s<br>ε = 0,1 × 40.000 = <strong>4.000 V</strong> (suficiente para a centelha!)</div>
+  <div class="ex-result">✅ τ = 20 ms &nbsp;·&nbsp; FEM de centenas a milhares de volts na interrupção</div>
+  <div class="ex-tip">💡 A bobina de ignição transforma 12 V da bateria em até 30.000 V para a centelha. Toda a "mágica" está no ε = −L·dI/dt com dI/dt enorme.</div>
+</div>
+</div>
+
+</div>
 <!-- QUIZ IND -->
 <div class="qmod-wrap">
 <div class="qmod-title">📝 QUIZ — INDUTORES</div>
@@ -766,6 +1065,54 @@ if(typeof window.showSci === 'undefined'){
 <circle r="5" fill="#00aaff" opacity=".6"><animateMotion dur="2.5s" begin="1.25s" repeatCount="indefinite" path="M480,28 L660,28 L660,168 L480,168"/></circle></svg></div>
 <div class="info-box">💡 Passo a passo: 1) Rp=R₂∥R₃=(12×6)/(12+6)=4Ω &nbsp; 2) Req=R₁+Rp=4+4=8Ω &nbsp; 3) I=24/8=3A &nbsp; 4) U₁=3×4=12V &nbsp; 5) Upar=12V &nbsp; 6) I₂=1A · I₃=2A</div></div>
 
+
+<div class="card" style="margin-top:20px">
+<h3>📐 Exemplos Resolvidos — Circuitos e Leis de Kirchhoff</h3>
+<p style="font-size:.88rem;color:var(--neon3);margin-bottom:14px">👇 Clique para expandir.</p>
+
+<div class="ex-box" data-open="0" style="background:rgba(0,245,255,.02)">
+<div class="ex-header" onclick="toggleEx(this)" style="color:var(--neon)">
+  <span>📘 EXEMPLO 1 — Lei dos Nós (LKC) — cruzamento de ruas elétricas</span>
+  <span class="ex-chevron">▼</span>
+</div>
+<div class="ex-body">
+  <div class="ex-step"><strong>🔍 Contexto:</strong> Imagine um nó elétrico como uma rotatória: tudo que entra deve sair. Num nó chegam I₁ = 8 A e I₂ = 3 A. Saem I₃ e I₄ = 4 A. Calcule I₃.</div>
+  <div class="ex-step"><strong>📌 LKC: ΣI_entrada = ΣI_saída</strong><br>8 + 3 = I₃ + 4<br>11 = I₃ + 4</div>
+  <div class="ex-result">✅ <strong>I₃ = 7 A</strong></div>
+  <div class="ex-step"><strong>📌 Interpretação física:</strong><br>Nenhuma carga é criada ou destruída no nó. É a conservação de carga elétrica aplicada a circuitos.</div>
+  <div class="ex-tip">💡 A LKC é consequência da conservação de carga. Viola-la seria o equivalente a "criar" elétrons do nada — impossível.</div>
+</div>
+</div>
+
+<div class="ex-box" data-open="0" style="background:rgba(251,191,36,.02)">
+<div class="ex-header" onclick="toggleEx(this)" style="color:var(--gold)">
+  <span>📘 EXEMPLO 2 — Lei das Malhas (LKT) — dimensionamento de resistor</span>
+  <span class="ex-chevron">▼</span>
+</div>
+<div class="ex-body">
+  <div class="ex-step"><strong>🔍 Contexto:</strong> Um LED precisa de exatamente 2 A para funcionar corretamente. Você tem uma fonte de 24 V e R₁ = 6 Ω já instalado. Qual R₂ inserir em série para limitar a corrente a 2 A?</div>
+  <div class="ex-step"><strong>📌 LKT: ΣU = 0 (sentido horário)</strong><br>+24 − R₁×I − R₂×I = 0<br>24 − 6×2 − R₂×2 = 0<br>24 − 12 − 2R₂ = 0<br>2R₂ = 12</div>
+  <div class="ex-result">✅ <strong>R₂ = 6 Ω</strong></div>
+  <div class="ex-step"><strong>📌 Interpretação:</strong><br>A fonte fornece 24 V. R₁ consome 12 V e R₂ consome 12 V. Energia conservada: 12+12 = 24 V ✓</div>
+  <div class="ex-tip">💡 A LKT é consequência da conservação de energia. A soma das quedas de tensão deve sempre igualar a tensão da fonte na malha.</div>
+</div>
+</div>
+
+<div class="ex-box" data-open="0" style="background:rgba(34,197,94,.02)">
+<div class="ex-header" onclick="toggleEx(this)" style="color:var(--green)">
+  <span>📘 EXEMPLO 3 — Divisor de tensão (interface sensor ↔ microcontrolador)</span>
+  <span class="ex-chevron">▼</span>
+</div>
+<div class="ex-body">
+  <div class="ex-step"><strong>🔍 Contexto:</strong> Sensores de temperatura geram 0–5 V. Um Arduino aceita no máximo 3,3 V na entrada analógica. Como adaptar? Use um divisor com R₁ = 10 kΩ.</div>
+  <div class="ex-step"><strong>📌 Fórmula do divisor:</strong><br>U_out = U_in × R₂/(R₁+R₂)<br>3,3 = 5 × R₂/(10 + R₂)</div>
+  <div class="ex-step"><strong>📌 Isolando R₂:</strong><br>3,3(10 + R₂) = 5R₂<br>33 + 3,3R₂ = 5R₂<br>33 = 1,7R₂<br>R₂ = 33/1,7 ≈ <strong>19,4 kΩ</strong></div>
+  <div class="ex-result">✅ R₂ ≈ 19,4 kΩ &nbsp;·&nbsp; Use 22 kΩ (valor comercial mais próximo)</div>
+  <div class="ex-tip">💡 Divisores de tensão são usados em todo circuito de interface. Com 22 kΩ: U_out = 5 × 22/(10+22) = 5 × 0,6875 ≈ 3,44 V — seguro para o Arduino.</div>
+</div>
+</div>
+
+</div>
 <!-- QUIZ CIRC -->
 <div class="qmod-wrap">
 <div class="qmod-title">📝 QUIZ — CIRCUITOS SÉRIE, PARALELO E MISTO</div>
@@ -1151,16 +1498,19 @@ function renderGate(mod){
     <div class="att-info">${badges}</div>
     <input class="qinput" id="${mod}-nome" placeholder="Nome completo *" required>
     <input class="qinput" id="${mod}-email" placeholder="E-mail *" type="email" required>
-    <div class="qi-row">
-      <input class="qinput" id="${mod}-serie" placeholder="Série/Ano *" required>
-      <select class="qinput" id="${mod}-turma" style="cursor:pointer" required>
-        <option value="">Selecione a Turma *</option>
+    <select class="qinput" id="${mod}-turma" style="cursor:pointer" required>
+      <option value="">Selecione a Turma *</option>
+      <optgroup label="1º Ano">
         <option>1º A</option><option>1º B</option><option>1º C</option>
+      </optgroup>
+      <optgroup label="2º Ano">
         <option>2º A</option><option>2º B</option><option>2º C</option>
+      </optgroup>
+      <optgroup label="3º Ano">
         <option>3º A</option><option>3º B</option><option>3º C</option>
-        <option>Turma A</option><option>Turma B</option><option>Turma C</option>
-      </select>
-    </div>
+        <option>3º A TEC</option><option>3º B TEC</option>
+      </optgroup>
+    </select>
     <button class="btn-start-quiz" onclick="checkAndStartQuiz('${mod}')">▶ INICIAR AVALIAÇÃO</button>
   </div>`;
 }
@@ -1202,12 +1552,13 @@ function startQuiz(mod){
   const nome=(elById(mod+'-nome')||{}).value||'';
   const turma=(elById(mod+'-turma')||{}).value||'';
   const email=(elById(mod+'-email')||{}).value||'';
-  const serie=(elById(mod+'-serie')||{}).value||'';
+  const serie='';
   if(!nome.trim()){showToast('⚠️ Informe seu nome completo!','warn');return;}
   if(!email.trim()||!email.includes('@')){showToast('⚠️ Informe um e-mail válido!','warn');return;}
-  if(!serie.trim()){showToast('⚠️ Informe a série/ano!','warn');return;}
   if(!turma){showToast('⚠️ Selecione a turma!','warn');return;}
   _currentStudentName=nome.trim(); // set global for key
+  // Update watermark with student name
+  if(typeof window._updateWatermark==='function') window._updateWatermark(nome.trim(),turma);
   let ctrl=_getCtrl(mod,nome);
   if(!ctrl.t0)ctrl.t0=Date.now();
   _saveCtrl(mod,ctrl,nome);
@@ -1245,34 +1596,111 @@ function renderQ(mod){
   const qnum=elById(mod+'-qnum');if(qnum)qnum.textContent=`Q ${s.idx+1}/${tot}`;
   const qtype=elById(mod+'-qtype');if(qtype)qtype.textContent=q.type||'';
   const w=elById(mod+'-qwrap');if(!w)return;
+  const p1txt=q.q1||q.q||'';
+  const p2html=q.q2?`
+    <div class="q-part" id="${mod}-part2">
+      <span class="q-part-label">➕ PARTE 2 — passe o cursor para revelar os dados complementares</span>
+      ${q.q2}
+      ${q.svg?`<div class="qsvg-wrap" style="margin-top:8px">${q.svg}</div>`:''}
+    </div>`:(q.svg?`<div class="qsvg-wrap">${q.svg}</div>`:'');
+  const optsHtml=q.opts.map((o,i)=>`
+    <div class="opt-wrap" id="${mod}-ow${i}" data-idx="${i}">
+      <button class="opt" ondblclick="selectOpt('${mod}',${i},this)">${String.fromCharCode(65+i)}) ${o}</button>
+    </div>`).join('');
   w.innerHTML=`<div>
-    <div class="qtext">${q.q}</div>
-    ${q.svg?`<div class="qsvg-wrap">${q.svg}</div>`:''}
-    ${q.opts.map((o,i)=>`<button class="opt" onclick="ansQ('${mod}',${i},this)">${String.fromCharCode(65+i)}) ${o}</button>`).join('')}
+    <div class="q-part" id="${mod}-part1">
+      <span class="q-part-label">🔍 PARTE 1 — passe o cursor para revelar o cenário</span>
+      ${p1txt}
+    </div>
+    ${p2html}
+    <div class="opts-hint">👁 CURSOR PARA REVELAR · DUPLO CLIQUE PARA SELECIONAR</div>
+    <div id="${mod}-opts">${optsHtml}</div>
     <div class="qfb" id="${mod}-fb"></div>
-    <div style="text-align:right"><button class="btn-next" id="${mod}-next" onclick="nextQ('${mod}')" style="display:none">PRÓXIMA →</button></div>
+    <div style="text-align:right;margin-top:14px">
+      <button class="btn-next" id="${mod}-next" onclick="confirmOpt('${mod}')" style="display:none">CONFIRMAR E PRÓXIMA →</button>
+    </div>
   </div>`;
+  // Reset provisional selection state
+  s._chosen=null;
 }
 
-function ansQ(mod,i,el){
-  const s=QCtrl[mod],q=s.qs[s.idx];
-  // Disable all options immediately — no highlight, no feedback
-  document.querySelectorAll(`#${mod}-qwrap .opt`).forEach(b=>{
-    b.disabled=true;b.onclick=null;
-    b.style.opacity='0.6';
+// ── Seleção PROVISÓRIA — duplo clique seleciona mas não confirma ──────
+function selectOpt(mod,i,el){
+  const s=QCtrl[mod];if(!s)return;
+  const q=s.qs[s.idx];
+  const nOpts=q.opts.length;
+
+  // Marcar escolha provisória
+  s._chosen=i;
+
+  // Partes do enunciado: reblur (não reveladas definitivamente)
+  [mod+'-part1',mod+'-part2'].forEach(id=>{
+    const p=document.getElementById(id);
+    if(p){p.style.filter='';p.classList.remove('force-visible');}
   });
-  // Record answer silently
+
+  // Alternativas: chosen fica visível, demais voltam ao blur
+  for(let j=0;j<nOpts;j++){
+    const wrap=document.getElementById(`${mod}-ow${j}`);
+    if(!wrap) continue;
+    if(j===i){
+      // Escolhida: visível, destacada, pointer-events ativos
+      wrap.classList.add('chosen');
+      wrap.classList.remove('unchosen');
+      wrap.style.filter='none';
+      const btn=wrap.querySelector('.opt');
+      if(btn){
+        btn.style.borderColor='rgba(0,245,255,.6)';
+        btn.style.background='rgba(0,245,255,.07)';
+        btn.style.opacity='1';
+      }
+    } else {
+      // Não escolhida: volta ao blur, mas ainda clicável via hover
+      wrap.classList.add('unchosen');
+      wrap.classList.remove('chosen');
+      wrap.style.filter='';  // volta ao CSS blur
+      const btn=wrap.querySelector('.opt');
+      if(btn){
+        btn.style.borderColor='';
+        btn.style.background='';
+        btn.style.opacity='';
+      }
+    }
+  }
+
+  // Mostrar botão de confirmar
+  const nx=elById(mod+'-next');
+  if(nx){nx.style.display='inline-block';}
+}
+
+// ── Confirmação DEFINITIVA — registra resposta e avança ───────────────
+function confirmOpt(mod){
+  const s=QCtrl[mod];if(!s)return;
+  if(s._chosen===null||s._chosen===undefined){
+    showToast('⚠️ Selecione uma alternativa primeiro!','warn');return;
+  }
+  const i=s._chosen;
+  const q=s.qs[s.idx];
+
+  // Registrar resposta
   const correct=(i===q.c);
   s.answers.push(correct?1:0);
   if(correct) s.score++;
-  // Show only neutral confirmation — NO correct/wrong reveal, NO explanation
-  el.style.opacity='1';
-  el.style.borderColor='rgba(0,245,255,0.5)';
-  el.style.background='rgba(0,245,255,0.06)';
-  // Show NEXT button — no feedback panel
-  const nx=elById(mod+'-next');if(nx)nx.style.display='inline-block';
+
+  // Avançar para próxima
+  s.idx++;
+  renderQ(mod);
 }
-function nextQ(mod){if(QCtrl[mod])QCtrl[mod].idx++;renderQ(mod);}
+
+// nextQ mantido para compatibilidade interna
+function nextQ(mod){confirmOpt(mod);}
+
+// ── Expandable examples ──────────────────────────────────────────────
+function toggleEx(el){
+  const box=el.closest('.ex-box');
+  const open=box.dataset.open==='1';
+  box.dataset.open=open?'0':'1';
+}
 
 function showResult(mod){
   if(QCtrl[mod]&&QCtrl[mod]._timer)clearInterval(QCtrl[mod]._timer);
@@ -1347,179 +1775,647 @@ function showToast(msg,type){
 }
 // ══ QUIZ BANK ════════════════════════════════════════════════════
 const BANK={
+// ── OHM ──────────────────────────────────────────────────────────
 ohm:[
-  ()=>{const u=rnd([12,24,36,48,110,127,220]),r=rnd([4,5,6,8,10,12,15,20,25,40]);const i=parseFloat((u/r).toFixed(2));const{opts,c}=shuf([i+' A',f(r/u)+' A',parseFloat((i*2).toFixed(2))+' A',parseFloat((u*r).toFixed(0))+' A'],0);return{q:`Um resistor de <strong>${fR(r)}</strong> é ligado a <strong>${u} V</strong>. Qual a corrente elétrica? <em style="color:var(--txt2);font-size:.85rem">(I = U/R)</em>`,svg:null,opts,c,exp:`I = U/R = ${u}/${r} = <strong>${f(i)} A</strong>. Pela 1ª Lei de Ohm, corrente é tensão dividida pela resistência.`,type:'🔢 CÁLCULO'};},
-  ()=>{const r=rnd([5,8,10,12,15,20,25]),i=rnd([0.5,1,1.5,2,2.5,3,4,5]);const u=parseFloat((r*i).toFixed(1));const{opts,c}=shuf([u+' V',f(r+i)+' V',parseFloat((u/2).toFixed(1))+' V',parseFloat((u*2).toFixed(1))+' V'],0);return{q:`Resistor de <strong>${fR(r)}</strong> com corrente de <strong>${f(i)} A</strong>. Qual a tensão aplicada? <em style="color:var(--txt2);font-size:.85rem">(U = R·I)</em>`,svg:null,opts,c,exp:`U = R×I = ${r}×${f(i)} = <strong>${f(u)} V</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const r1=rnd([4,6,8,10,12]),r2=rnd([4,6,8,10,12]),u=rnd([12,24,36,48]);const req=r1+r2,i=parseFloat((u/req).toFixed(2));const{opts,c}=shuf([req+' Ω',parseFloat((r1*r2/(r1+r2)).toFixed(2))+' Ω',Math.abs(r1-r2)+' Ω',(r1*r2)+' Ω'],0);return{q:`R₁=${fR(r1)} e R₂=${fR(r2)} em <strong>série</strong> com ${u}V. Req=?`,svg:svgS(r1,r2,u,false),opts,c,exp:`Série: Req = R₁+R₂ = ${r1}+${r2} = <strong>${req} Ω</strong>. Corrente: I=${f(i)}A`,type:'🔢 CÁLCULO'};},
-  ()=>{const r1=rnd([6,8,10,12,20,24]),r2=rnd([6,8,10,12,20,24]),u=rnd([12,24,36]);const req=parseFloat((r1*r2/(r1+r2)).toFixed(2));const{opts,c}=shuf([f(req)+' Ω',(r1+r2)+' Ω',f(req*2)+' Ω',Math.max(r1,r2)+' Ω'],0);return{q:`R₁=${fR(r1)} e R₂=${fR(r2)} em <strong>paralelo</strong> com ${u}V. Req=?`,svg:svgP(r1,r2,u),opts,c,exp:`Paralelo: Req=(${r1}×${r2})/(${r1}+${r2})=${r1*r2}/${r1+r2}≈<strong>${f(req)} Ω</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const r1=rnd([4,6,8,10]),r2=rnd([4,6,8,10]),u=rnd([12,24,48]);const req=r1+r2,i=parseFloat((u/req).toFixed(2)),u1=parseFloat((i*r1).toFixed(2));const{opts,c}=shuf([f(u1)+' V',parseFloat((i*r2).toFixed(2))+' V',u+' V',parseFloat((u1*2).toFixed(2))+' V'],0);return{q:`Série: U=${u}V, R₁=${fR(r1)}, R₂=${fR(r2)}. Queda de tensão em R₁?`,svg:svgS(r1,r2,u,false),opts,c,exp:`I=${f(i)}A → U₁=I×R₁=${f(i)}×${r1}=<strong>${f(u1)} V</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const r1=rnd([6,8,12]),r2=rnd([4,6,8]),r3=rnd([4,6,8,12]),u=rnd([24,36,48]);const rp=parseFloat((r2*r3/(r2+r3)).toFixed(2)),req=parseFloat((r1+rp).toFixed(2)),it=parseFloat((u/req).toFixed(2));const{opts,c}=shuf([f(req)+' Ω',(r1+r2+r3)+' Ω',f(rp)+' Ω',f(r1+r2)+' Ω'],0);return{q:`Misto: R₁=${fR(r1)} série + R₂=${fR(r2)}∥R₃=${fR(r3)}, U=${u}V. Req=?`,svg:svgM(r1,r2,r3,u),opts,c,exp:`Rp=${f(rp)}Ω → Req=R₁+Rp=${r1}+${f(rp)}=<strong>${f(req)} Ω</strong> → I=${f(it)}A`,type:'🔢 CÁLCULO'};},
-  {q:'Um condutor é ôhmico quando:',svg:null,opts:['Tensão e corrente são proporcionais (U=RI)','A resistência aumenta com a temperatura','A corrente é independente da tensão','Obedece apenas à 2ª Lei de Ohm'],c:0,exp:'Condutor ôhmico: relação linear U=R·I com R constante. Gráfico U×I é uma reta pela origem.',type:'💭 CONCEITUAL'},
-  {q:'A 2ª Lei de Ohm (R=ρL/A) indica que fios mais longos têm:',svg:null,opts:['Maior resistência (L ↑ → R ↑)','Menor resistência','Mesma resistência','Resistência proporcional à tensão'],c:0,exp:'R=ρL/A — resistência proporcional ao comprimento. Fio longo→ maior R→ maior queda de tensão.',type:'💭 CONCEITUAL'},
-  {q:'Em um circuito em série, se um resistor queimar (circuito aberto):',svg:null,opts:['Toda corrente para (único caminho)','Os outros continuam funcionando','A corrente aumenta nos demais','A tensão cai para zero na fonte'],c:0,exp:'Série tem um único caminho. Circuito aberto→ I=0 em todo o circuito. Ex: pisca-pisca antigo.',type:'💭 CONCEITUAL'},
-  {q:'Em um circuito em paralelo, se um ramo queimar (circuito aberto):',svg:null,opts:['Toda corrente para','Os outros ramos continuam normalmente','A resistência total aumenta e a corrente total diminui','A tensão sobe nos demais ramos'],c:2,exp:'Em paralelo cada ramo é independente. Ramo aberto→ Req aumenta→ Itotal diminui, mas os outros funcionam.',type:'💭 CONCEITUAL'},
-  ()=>{const r1=rnd([3,4,6]),r2=rnd([6,8,12]),r3=rnd([4,6,8]),u=rnd([24,36,48]);const rp=parseFloat((r2*r3/(r2+r3)).toFixed(2)),req=parseFloat((r1+rp).toFixed(2)),it=parseFloat((u/req).toFixed(2)),pt=parseFloat((u*it).toFixed(1));const{opts,c}=shuf([f(it)+' A',parseFloat((u/r1).toFixed(2))+' A',parseFloat((it/2).toFixed(2))+' A',parseFloat((u/req/2).toFixed(2))+' A'],0);return{q:`Misto: R₁=${fR(r1)} série + R₂=${fR(r2)}∥R₃=${fR(r3)}, U=${u}V. Corrente total?`,svg:svgM(r1,r2,r3,u),opts,c,exp:`Req≈${f(req)}Ω → It=U/Req=${u}/${f(req)}≈<strong>${f(it)} A</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const u=rnd([110,127,220]),r=rnd([20,40,44,50,100]);const i=parseFloat((u/r).toFixed(3));const{opts,c}=shuf([f(i)+' A',parseFloat((r/u).toFixed(4))+' A',parseFloat((i*2).toFixed(3))+' A',parseFloat((u/r/3).toFixed(3))+' A'],0);return{q:`Resistência de ${fR(r)} ligada a ${u}V. Qual a corrente? <em style="color:var(--txt2);font-size:.85rem">(Aplicação: chuveiro/aquecedor)</em>`,svg:null,opts,c,exp:`I=U/R=${u}/${r}≈<strong>${f(i)} A</strong>. Em tomadas residenciais, este é o consumo de um aparelho comum.`,type:'🔢 CÁLCULO'};},
-
-  // Extra questions OHM
-  ()=>{const u=rnd([12,24,36,48,60]),r=rnd([2,3,4,6,8,10,15,20,30,60]);const i=parseFloat((u/r).toFixed(2));const{opts,c}=shuf([i+' A',f(parseFloat((i*3).toFixed(2)))+' A',parseFloat((r/u).toFixed(3))+' A',parseFloat((u+r).toFixed(0))+' A'],0);return{q:`Fonte de <strong>${u}V</strong> ligada a <strong>${fR(r)}</strong>. Corrente no circuito?`,svg:null,opts,c,exp:`I=U/R=${u}/${r}=<strong>${f(i)}A</strong>. Lei de Ohm: I=U/R.`,type:'🔢 CÁLCULO'};},
-  ()=>{const i=rnd([0.5,1,2,3,4,5]),u=rnd([6,10,12,15,20,24,30]);const r=parseFloat((u/i).toFixed(1));const{opts,c}=shuf([fR(r),fR(parseFloat((r*2).toFixed(1))),fR(parseFloat((r/2).toFixed(1))),fR(parseFloat((u*i).toFixed(0)))],0);return{q:`Corrente de <strong>${f(i)}A</strong> e tensão de <strong>${u}V</strong>. Qual a resistência?`,svg:null,opts,c,exp:`R=U/I=${u}/${f(i)}=<strong>${fR(r)}</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const r1=rnd([3,5,7,9,11]),r2=rnd([3,5,7,9,11]),r3=rnd([3,5,7,9,11]),u=rnd([18,27,36,45]);const req=r1+r2+r3,i=parseFloat((u/req).toFixed(2)),u2=parseFloat((i*r2).toFixed(2));const{opts,c}=shuf([f(u2)+' V',parseFloat((u2*2).toFixed(2))+' V',u+' V',parseFloat((i*r1).toFixed(2))+' V'],0);return{q:`Série: R₁=${fR(r1)}, R₂=${fR(r2)}, R₃=${fR(r3)}, U=${u}V. Tensão em R₂?`,svg:svgS(r1,r2,u,false),opts,c,exp:`Req=${req}Ω, I=${f(i)}A → U₂=I·R₂=${f(i)}×${r2}=<strong>${f(u2)}V</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const r1=rnd([4,6,8,12]),r2=rnd([4,6,8,12]),r3=rnd([4,6,8,12]),u=rnd([12,24,36]);const req=parseFloat(((r1*(r2+r3))/(r1+r2+r3)).toFixed(2)),it=parseFloat((u/req).toFixed(2));const{opts,c}=shuf([f(req)+' Ω',(r1+r2+r3)+' Ω',parseFloat((req*2).toFixed(2))+' Ω',f(r1)+' Ω'],0);return{q:`R₁=${fR(r1)} em paralelo com R₂+R₃ em série (${fR(r2+r3)}), U=${u}V. Req?`,svg:svgM(r1,r2,r3,u),opts,c,exp:`Série R₂+R₃=${r2+r3}Ω em ∥ com R₁: Req=(${r1}×${r2+r3})/(${r1}+${r2+r3})≈<strong>${f(req)}Ω</strong>`,type:'🔢 CÁLCULO'};},
-  {q:'Um condutor não-ôhmico tem como característica:',svg:null,opts:['Relação U×I não linear (R varia)','Resistência constante em qualquer condição','Segue rigorosamente U=RI','Resistência zero em altas temperaturas'],c:0,exp:'Não-ôhmico: R varia com temperatura, tensão ou corrente. Ex: diodo, transistor, lâmpada aquecida.',type:'💭 CONCEITUAL'},
-  {q:'A resistividade (ρ) do cobre é menor que a do ferro. Isso significa:',svg:null,opts:['Cobre conduz melhor (menor oposição ao fluxo de corrente)','Ferro conduz melhor','Cobre tem mais elétrons livres por metro quadrado','Resistência independe do material'],c:0,exp:'Menor ρ → menor R para mesma geometria → melhor condutor. Cobre (1,7×10⁻⁸Ω·m) vs Ferro (1×10⁻⁷Ω·m).',type:'💭 CONCEITUAL'},
-  ()=>{const r=rnd([5,10,20,25,50]),n=rnd([2,3,4,5]);const rpar=parseFloat((r/n).toFixed(2));const{opts,c}=shuf([fR(rpar),fR(r*n),fR(r),fR(parseFloat((r/n/2).toFixed(2)))],0);return{q:`${n} resistores iguais de <strong>${fR(r)}</strong> cada em paralelo. Req=?`,svg:null,opts,c,exp:`Paralelo de resistores iguais: Req=R/n=${r}/${n}=<strong>${fR(rpar)}</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const r=rnd([5,10,20,25,50]),n=rnd([2,3,4,5]);const rser=r*n;const{opts,c}=shuf([fR(rser),fR(r/n),fR(r),fR(rser*2)],0);return{q:`${n} resistores iguais de <strong>${fR(r)}</strong> cada em série. Req=?`,svg:null,opts,c,exp:`Série de resistores iguais: Req=n×R=${n}×${r}=<strong>${fR(rser)}</strong>`,type:'🔢 CÁLCULO'};},
-  {q:'Por que fios de alta tensão de alumínio têm maior diâmetro que fios de cobre para a mesma capacidade de corrente?',svg:null,opts:['Alumínio tem ρ maior que cobre, precisa de maior A para compensar (R=ρL/A)','Alumínio é mais leve, pode ser mais grosso','Alumínio tem ρ menor, menor resistência','Diâmetro maior não tem relação com resistência'],c:0,exp:'R=ρL/A. Alumínio (ρ=2,8×10⁻⁸) vs Cobre (1,7×10⁻⁸): maior ρ → precisa de maior A para mesma resistência.',type:'💭 CONCEITUAL'},
-  ()=>{const u=rnd([12,24,48,110,220]),r=rnd([4,6,8,10,12,15,20,25]);const i=parseFloat((u/r).toFixed(2)),p=parseFloat((u*i).toFixed(1));const{opts,c}=shuf([f(p)+' W',parseFloat((p/2).toFixed(1))+' W',parseFloat((p*2).toFixed(1))+' W',parseFloat((i*i).toFixed(2))+' W'],0);return{q:`R=${fR(r)} ligado a U=${u}V. Potência dissipada?`,svg:null,opts,c,exp:`I=U/R=${f(i)}A → P=U·I=${u}×${f(i)}=<strong>${f(p)}W</strong>`,type:'🔢 CÁLCULO'};},
-  {q:'Ao aumentar o comprimento de um fio pela metade (L→1,5L) mantendo a mesma área, a resistência:',svg:null,opts:['Aumenta 50% (R∝L)','Diminui 50%','Dobra','Não muda'],c:0,exp:'R=ρL/A. L→1,5L → R→1,5R. Resistência aumenta proporcionalmente ao comprimento.',type:'💭 CONCEITUAL'},
-
-  // ── OHM EXTRA BATCH 2 ─────────────────────────────────────────
-  ()=>{const u=rnd([6,9,12,15,18,21,24]),r=rnd([1,2,3,6,9]);const i=parseFloat((u/r).toFixed(1));const{opts,c}=shuf([f(i)+' A',f(parseFloat((i+2).toFixed(1)))+' A',f(parseFloat((r/u).toFixed(2)))+' A',f(parseFloat((i*r).toFixed(0)))+' A'],0);return{q:`Bateria de <strong>${u}V</strong> ligada a resistor de <strong>${fR(r)}</strong>. Qual corrente circula?`,svg:null,opts,c,exp:`I = U/R = ${u}/${r} = <strong>${f(i)} A</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const i=rnd([0.2,0.5,0.8,1.2,1.5,2.5,3.5]),u=rnd([5,6,9,10,12,15,18,20]);const r=parseFloat((u/i).toFixed(1));const{opts,c}=shuf([fR(r),fR(parseFloat((r+5).toFixed(1))),fR(parseFloat((r/2).toFixed(1))),fR(parseFloat((r*3).toFixed(1)))],0);return{q:`Corrente de <strong>${f(i)} A</strong> com <strong>${u} V</strong> aplicados. Resistência?`,svg:null,opts,c,exp:`R = U/I = ${u}/${f(i)} = <strong>${fR(r)}</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const r1=rnd([3,6,9,12]),r2=rnd([3,6,9,12]),u=rnd([18,24,30,36]);const req=r1+r2,i=parseFloat((u/req).toFixed(2)),u2=parseFloat((i*r2).toFixed(1));const{opts,c}=shuf([f(u2)+' V',f(parseFloat((u2+3).toFixed(1)))+' V',u+' V',f(parseFloat((i*r1).toFixed(1)))+' V'],0);return{q:`R₁=<strong>${fR(r1)}</strong>, R₂=<strong>${fR(r2)}</strong> em série, U=${u}V. Tensão em R₂?`,svg:svgS(r1,r2,u,false),opts,c,exp:`I = ${u}/${req} = ${f(i)}A → U₂ = ${f(i)}×${r2} = <strong>${f(u2)} V</strong>`,type:'🔢 CÁLCULO'};},
-  {q:'Georg Ohm publicou sua lei em 1827. A comunidade científica inicialmente:',svg:null,opts:['Rejeitou e ele perdeu o emprego','Celebrou e premiou imediatamente','Ignorou completamente','Publicou junto com ele'],c:0,exp:'Ohm foi ridicularizado e perdeu o emprego. Só em 1841 foi reconhecido com a Medalha Copley da Royal Society.',type:'💭 HISTÓRICO'},
-  {q:'A grandeza que indica a facilidade de um material conduzir corrente elétrica é:',svg:null,opts:['Condutividade elétrica (σ = 1/ρ)','Resistividade (ρ)','Indutância (L)','Capacitância (C)'],c:0,exp:'Condutividade σ = 1/ρ (inverso da resistividade). Maior σ → melhor condutor. Cobre: σ ≈ 5,8×10⁷ S/m.',type:'💭 CONCEITUAL'},
-  ()=>{const n=rnd([2,3,4,5]),r=rnd([6,8,10,12,15,20]);const rp=parseFloat((r/n).toFixed(1));const{opts,c}=shuf([fR(rp),fR(r*n),fR(r),fR(parseFloat((r/(n+1)).toFixed(1)))],0);return{q:`<strong>${n} resistores iguais</strong> de ${fR(r)} cada em <strong>paralelo</strong>. Req = ?`,svg:null,opts,c,exp:`Resistores iguais em paralelo: Req = R/n = ${r}/${n} = <strong>${fR(rp)}</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const n=rnd([2,3,4,5]),r=rnd([4,5,6,8,10]);const rs=r*n;const{opts,c}=shuf([fR(rs),fR(r/n),fR(r),fR(rs*2)],0);return{q:`<strong>${n} resistores iguais</strong> de ${fR(r)} cada em <strong>série</strong>. Req = ?`,svg:null,opts,c,exp:`Resistores iguais em série: Req = n×R = ${n}×${r} = <strong>${fR(rs)}</strong>`,type:'🔢 CÁLCULO'};},
-  {q:'Um fio de cobre é esticado até dobrar seu comprimento. A resistência:',svg:null,opts:['Quadruplica (R = ρL/A — L dobra, A cai à metade)','Dobra apenas','Permanece igual','Reduz à metade'],c:0,exp:'Esticar dobra L e reduz A pela metade (volume constante). R = ρL/A → R_nova = ρ(2L)/(A/2) = 4R. Quadruplica!',type:'💭 CONCEITUAL'},
-  ()=>{const u=rnd([12,24,48,110,220]),r1=rnd([4,5,6,8]),r2=rnd([4,5,6,8]),r3=rnd([4,5,6,8]);const req=r1+r2+r3,i=parseFloat((u/req).toFixed(2));const{opts,c}=shuf([fR(req),fR(r1+r2),fR(r1*r2*r3),f(r1*r2/(r1+r2))+' Ω'],0);return{q:`Três resistores ${fR(r1)}, ${fR(r2)}, ${fR(r3)} em série. Req = ?`,svg:null,opts,c,exp:`Req = R₁+R₂+R₃ = ${r1}+${r2}+${r3} = <strong>${fR(req)}</strong>. I = ${u}/${req} = ${f(i)}A`,type:'🔢 CÁLCULO'};},
-  {q:'A resistência elétrica de metais como cobre e alumínio quando aquecidos:',svg:null,opts:['Aumenta (mais vibrações atômicas dificultam o fluxo de elétrons)','Diminui','Permanece constante','Zera (supercondução)'],c:0,exp:'Metais: ρ aumenta com T. Mais vibração térmica → mais colisões dos elétrons → maior resistência. Supercondução ocorre em T ≈ 0K.',type:'💭 CONCEITUAL'},
+  // 1
+  ()=>{const u=rnd([12,24,48,110,220]),r=rnd([4,6,8,10,20,40]);const i=parseFloat((u/r).toFixed(2));
+    const{opts,c}=shuf([
+      `${f(i)} A — divisão correta tensão÷resistência`,
+      `${f(r)} A — confundiu resistência com corrente`,
+      `${f(parseFloat((u*r).toFixed(0)))} A — multiplicou ao invés de dividir`,
+      `${f(parseFloat((i/2).toFixed(2)))} A — dividiu por dois desnecessariamente`
+    ],0);
+    return{
+      q1:`⚡ <strong>Instalação elétrica:</strong> Um técnico precisa dimensionar o disjuntor para proteger um circuito residencial. Ele mede a tensão na tomada: <strong>U = ${u} V</strong>.`,
+      q2:`O equipamento instalado tem resistência de <strong>R = ${fR(r)}</strong>. Qual a corrente que circula pelo circuito? (I = U/R)`,
+      svg:null,opts,c,exp:`I = U/R = ${u}/${r} = <strong>${f(i)} A</strong>. Disjuntor deve ser de pelo menos ${Math.ceil(i*1.25)} A.`,type:'🔢 CÁLCULO'};},
+  // 2
+  ()=>{const r=rnd([5,8,10,15,20,25]),i=rnd([0.5,1,1.5,2,3,4,5]);const u=parseFloat((r*i).toFixed(1));
+    const{opts,c}=shuf([
+      `${f(u)} V — produto correto R×I`,
+      `${f(r+i)} V — somou ao invés de multiplicar`,
+      `${f(parseFloat((u/2).toFixed(1)))} V — dividiu por dois (Lei de Ohm invertida)`,
+      `${f(parseFloat((u*3).toFixed(1)))} V — triplicou sem justificativa`
+    ],0);
+    return{
+      q1:`🔋 <strong>Laboratório escolar:</strong> Num experimento de eletricidade, o multímetro indica corrente elétrica de <strong>I = ${f(i)} A</strong> no circuito.`,
+      q2:`O resistor do experimento tem <strong>R = ${fR(r)}</strong>. Qual a tensão que a fonte deve fornecer? (U = R·I)`,
+      svg:null,opts,c,exp:`U = R×I = ${r}×${f(i)} = <strong>${f(u)} V</strong>`,type:'🔢 CÁLCULO'};},
+  // 3
+  ()=>{const r1=rnd([4,6,8,10,12]),r2=rnd([4,6,8,10,12]),u=rnd([12,24,36,48]);const req=r1+r2,i=parseFloat((u/req).toFixed(2));
+    const{opts,c}=shuf([
+      `${req} Ω — soma direta, válida em série`,
+      `${parseFloat((r1*r2/(r1+r2)).toFixed(2))} Ω — fórmula do paralelo (usou a errada)`,
+      `${Math.abs(r1-r2)} Ω — subtraiu ao invés de somar`,
+      `${r1*r2} Ω — multiplicou (fórmula inexistente)`
+    ],0);
+    return{
+      q1:`💡 <strong>Pisca-pisca natalino:</strong> Num pisca-pisca antigo, as lâmpadas são ligadas em <strong>série</strong>. O técnico encontra dois grupos de resistência R₁ = ${fR(r1)} e R₂ = ${fR(r2)}.`,
+      q2:`A fonte fornece <strong>U = ${u} V</strong>. Qual a resistência equivalente total do circuito série?`,
+      svg:svgS(r1,r2,u,false),opts,c,exp:`Série: Req = R₁+R₂ = ${r1}+${r2} = <strong>${req} Ω</strong>. Corrente: I = ${u}/${req} = ${f(i)} A`,type:'🔢 CÁLCULO'};},
+  // 4
+  ()=>{const r1=rnd([6,8,12,15,20,24]),r2=rnd([6,8,12,15,20,24]),u=rnd([12,24,36]);const req=parseFloat((r1*r2/(r1+r2)).toFixed(2));
+    const{opts,c}=shuf([
+      `${f(req)} Ω — fórmula produto÷soma correta`,
+      `${r1+r2} Ω — fórmula da série (usou a errada)`,
+      `${Math.max(r1,r2)} Ω — pegou só o maior resistor`,
+      `${f(req*2)} Ω — dobrou erroneamente o resultado`
+    ],0);
+    return{
+      q1:`🏠 <strong>Instalação residencial:</strong> Tomadas de uma casa são ligadas em <strong>paralelo</strong> para que cada aparelho receba a mesma tensão. Dois aquecedores têm R₁ = ${fR(r1)} e R₂ = ${fR(r2)}.`,
+      q2:`A tensão da rede é <strong>U = ${u} V</strong>. Qual a resistência equivalente dos dois aquecedores em paralelo?`,
+      svg:svgP(r1,r2,u),opts,c,exp:`Paralelo: Req = (${r1}×${r2})/(${r1}+${r2}) = ${r1*r2}/${r1+r2} ≈ <strong>${f(req)} Ω</strong>. Req < menor R!`,type:'🔢 CÁLCULO'};},
+  // 5
+  ()=>{const r1=rnd([4,6,8,10]),r2=rnd([4,6,8,10]),u=rnd([12,24,48]);const req=r1+r2,i=parseFloat((u/req).toFixed(2)),u1=parseFloat((i*r1).toFixed(2));
+    const{opts,c}=shuf([
+      `${f(u1)} V — proporcional a R₁/(R₁+R₂)`,
+      `${u} V — toda a tensão em R₁ (só ocorre em circuito aberto)`,
+      `${f(parseFloat((u/2).toFixed(2)))} V — divisão igual (só quando R₁=R₂)`,
+      `${f(parseFloat((i*r2).toFixed(2)))} V — queda em R₂ (resistor errado)`
+    ],0);
+    return{
+      q1:`📡 <strong>Divisor de tensão para sensor:</strong> Um sensor de temperatura gera 0–5 V, mas o microcontrolador aceita no máximo ${u} V. O projetista usa um divisor com R₁ = ${fR(r1)} e R₂ = ${fR(r2)} em série.`,
+      q2:`A tensão da fonte é <strong>U = ${u} V</strong>. Qual a queda de tensão em R₁? (Usada para calibrar o sensor)`,
+      svg:svgS(r1,r2,u,false),opts,c,exp:`I = ${u}/${req} = ${f(i)} A → U₁ = I×R₁ = ${f(i)}×${r1} = <strong>${f(u1)} V</strong>`,type:'🔢 CÁLCULO'};},
+  // 6
+  {
+    q1:`🌡️ <strong>Termistor NTC em sistema de alarme:</strong> Um termistor NTC reduz sua resistência quando aquece — é o princípio de detectores de incêndio. Em temperatura ambiente, R = 100 Ω e a corrente é I₀.`,
+    q2:`Quando a temperatura sobe e o termistor aquece, R cai para <strong>50 Ω (metade)</strong>, mantendo a tensão U constante. O que acontece com a corrente e com a potência dissipada?`,
+    svg:null,
+    opts:['Corrente dobra (I=U/R) e potência dobra (P=U²/R — R caiu à metade)','Corrente dobra e potência quadruplica (confundiu com P=RI²)','Corrente cai à metade e potência aumenta','Corrente e potência não se alteram — só a resistência muda'],
+    c:0,exp:'R cai metade → I=U/R dobra. P=U²/R: R caiu metade → P dobra. Alarme detecta: corrente maior → dispara o sinal.',type:'💭 ANÁLISE'},
+  // 7
+  ()=>{const r1=rnd([10,15,20,30]),r2=rnd([10,15,20,30]),u=rnd([30,60,90,120]);const req=r1+r2,i=parseFloat((u/req).toFixed(2)),u1=parseFloat((i*r1).toFixed(1));
+    const{opts,c}=shuf([
+      `${f(u1)} V — proporcional ao valor de R₁`,
+      `${u} V — tensão total (não só em R₁)`,
+      `${f(parseFloat((u/2).toFixed(1)))} V — metade (só válido quando R₁=R₂)`,
+      `${f(parseFloat((i*r2).toFixed(1)))} V — calculou a queda em R₂`
+    ],0);
+    return{
+      q1:`🔌 <strong>Proteção de LED com resistor:</strong> Para usar um LED de 3 V em uma fonte de ${u} V, é preciso colocar um resistor limitador em série. R₁ = ${fR(r1)} é o resistor de proteção e R₂ = ${fR(r2)} representa a resistência interna do LED.`,
+      q2:`Fonte <strong>U = ${u} V</strong>, R₁ = ${fR(r1)} e R₂ = ${fR(r2)} em série. Qual a tensão que cai em R₁ (o resistor de proteção)?`,
+      svg:svgS(r1,r2,u,false),opts,c,exp:`Req = ${req} Ω, I = ${f(i)} A → U₁ = ${f(i)}×${r1} = <strong>${f(u1)} V</strong>`,type:'🔢 APLICAÇÃO'};},
+  // 8
+  {
+    q1:`⚗️ <strong>Experimento de Ohm (1827):</strong> Georg Ohm mediu a relação entre tensão e corrente usando fios metálicos como resistores. Ele verificou que ao dobrar a tensão, a corrente também dobrava — e ao triplicar a tensão, a corrente triplicava.`,
+    q2:`Com base nesses resultados, qual das afirmações descreve corretamente o comportamento de um <strong>condutor ôhmico</strong>?`,
+    svg:null,
+    opts:['Tensão e corrente são proporcionais — a razão U/I = R é constante','A resistência aumenta quando a temperatura aumenta (condutor não-ôhmico)','A corrente independe da tensão aplicada','A resistência é proporcional ao quadrado da tensão'],
+    c:0,exp:'Condutor ôhmico: U = R·I com R constante. Gráfico U×I é reta pela origem. Ohm publicou em 1827 e foi demitido — reconhecido só em 1841.',type:'💭 CONCEITUAL'},
+  // 9
+  ()=>{const r=rnd([5,10,20,25,50]),n=rnd([2,3,4,5]);const rpar=parseFloat((r/n).toFixed(2));
+    const{opts,c}=shuf([
+      `${fR(rpar)} — Req = R/n (paralelo de iguais)`,
+      `${fR(r*n)} — multiplicou (seria série)`,
+      `${fR(r)} — não calculou, pegou o valor original`,
+      `${fR(parseFloat((r/n/2).toFixed(2)))} — dividiu por 2n (excesso)`
+    ],0);
+    return{
+      q1:`🚦 <strong>LEDs em paralelo:</strong> Para iluminar uma placa de trânsito, um engenheiro usa <strong>${n} LEDs iguais em paralelo</strong>. Cada LED tem resistência interna de <strong>${fR(r)}</strong>.`,
+      q2:`Para calcular a corrente total fornecida pela fonte, é preciso a resistência equivalente. Qual o valor de Req com ${n} resistores de ${fR(r)} em paralelo?`,
+      svg:null,opts,c,exp:`Paralelo de resistores iguais: Req = R/n = ${r}/${n} = <strong>${fR(rpar)}</strong>`,type:'🔢 CÁLCULO'};},
+  // 10
+  {
+    q1:`🔬 <strong>2ª Lei de Ohm — Material do fio:</strong> Um engenheiro compara dois fios com o mesmo comprimento e mesma seção transversal. O fio A é de cobre (ρ = 1,7×10⁻⁸ Ω·m) e o fio B é de alumínio (ρ = 2,8×10⁻⁸ Ω·m).`,
+    q2:`Mantendo L e A iguais, qual fio tem <strong>menor resistência</strong> e por quê? Pense na fórmula R = ρL/A.`,
+    svg:null,
+    opts:['Fio A (cobre) — menor ρ implica menor R para mesma geometria','Fio B (alumínio) — maior ρ implica menor R','São iguais — dependem só do comprimento','Fio B — alumínio é mais leve então conduz melhor'],
+    c:0,exp:'R = ρL/A. Menor ρ → menor R → melhor condutor. Cobre: ρ = 1,7×10⁻⁸ Ω·m < Alumínio: 2,8×10⁻⁸. Por isso fiação elétrica usa cobre.',type:'💭 CONCEITUAL'},
+  // 11
+  ()=>{const u=rnd([9,12,24,48]),r=rnd([3,4,6,8,12]);const i=parseFloat((u/r).toFixed(2));
+    const{opts,c}=shuf([
+      `${f(i)} A — I = U/R`,
+      `${f(parseFloat((r/u).toFixed(3)))} A — inverteu R e U`,
+      `${f(parseFloat((i+r).toFixed(2)))} A — somou corrente com resistência`,
+      `${f(parseFloat((i*2).toFixed(2)))} A — dobrou sem motivo`
+    ],0);
+    return{
+      q1:`🚗 <strong>Sistema elétrico automotivo:</strong> A bateria de um carro fornece <strong>${u} V</strong> para alimentar um ventilador do painel.`,
+      q2:`O motor do ventilador tem resistência equivalente de <strong>${fR(r)}</strong>. Qual a corrente que percorre o circuito quando o ventilador está ligado?`,
+      svg:null,opts,c,exp:`I = U/R = ${u}/${r} = <strong>${f(i)} A</strong>. Fio de alimentação deve suportar essa corrente.`,type:'🔢 CÁLCULO'};},
+  // 12
+  {
+    q1:`⚡ <strong>Sobrecarga na fiação:</strong> Um eletricista explica que fios têm corrente máxima de segurança. Se muitos aparelhos forem ligados na mesma tomada, a corrente aumenta e o fio pode aquecer perigosamente (Efeito Joule: Q = R·I²·t).`,
+    q2:`Um fio de cobre de bitola 1,5 mm² suporta no máximo 15 A. Se a corrente aumentar para 30 A (dobrar), o calor gerado em certo tempo será <strong>quantas vezes maior</strong>?`,
+    svg:null,
+    opts:['4 vezes maior — Q = RI²·t, corrente dobrou → Q ×4','2 vezes maior — corrente dobrou, calor dobra (raciocínio linear)','Igual — o fio dissipa o mesmo calor independente da corrente','8 vezes maior — corrente dobrou e Q é cúbico'],
+    c:0,exp:'Q = R·I²·t. Dobrar I → Q = R·(2I)²·t = 4·R·I²·t. Calor 4× maior! Por isso disjuntores existem: cortam o circuito antes do fio queimar.',type:'💭 ANÁLISE'},
+  // 13
+  ()=>{const r1=rnd([3,5,7,9]),r2=rnd([3,5,7,9]),r3=rnd([3,5,7,9]),u=rnd([18,27,36,45]);const req=r1+r2+r3,i=parseFloat((u/req).toFixed(2)),u2=parseFloat((i*r2).toFixed(2));
+    const{opts,c}=shuf([
+      `${f(u2)} V — U₂ = I·R₂ (corrente única em série)`,
+      `${u} V — tensão total (não só em R₂)`,
+      `${f(parseFloat((u/3).toFixed(2)))} V — divisão igual (só se todos R iguais)`,
+      `${f(parseFloat((i*r1).toFixed(2)))} V — calculou a queda em R₁`
+    ],0);
+    return{
+      q1:`🔦 <strong>Lanterna de três baterias:</strong> Uma lanterna de camping usa três elementos resistivos em <strong>série</strong>: R₁ = ${fR(r1)}, R₂ = ${fR(r2)} e R₃ = ${fR(r3)}.`,
+      q2:`As baterias fornecem <strong>${u} V</strong> no total. Qual a tensão que cai especificamente em <strong>R₂</strong>?`,
+      svg:svgS(r1,r2,u,false),opts,c,exp:`Req = ${req} Ω, I = ${f(i)} A → U₂ = I·R₂ = ${f(i)}×${r2} = <strong>${f(u2)} V</strong>`,type:'🔢 CÁLCULO'};},
+  // 14
+  {
+    q1:`🌐 <strong>Fio de alta tensão:</strong> Linhas de transmissão de energia elétrica usam fios de alumínio (mais leve e barato que cobre), mas com diâmetro maior. O alumínio tem ρ = 2,8×10⁻⁸ Ω·m e o cobre ρ = 1,7×10⁻⁸ Ω·m.`,
+    q2:`Para que um fio de alumínio tenha a <strong>mesma resistência</strong> que um fio de cobre do mesmo comprimento L, o que deve ser feito com sua seção transversal A? Use R = ρL/A.`,
+    svg:null,
+    opts:['Aumentar A (maior ρ precisa de maior A para compensar e manter R igual)','Diminuir A (maior ρ já garante menor R)','Manter A igual (resistência não depende do material)','Reduzir L pela metade (comprimento compensa a diferença)'],
+    c:0,exp:'R = ρL/A → A = ρL/R. Para o mesmo R e L: A_Al/A_Cu = ρ_Al/ρ_Cu = 2,8/1,7 ≈ 1,65. Alumínio precisa de seção 65% maior!',type:'💭 ANÁLISE'},
+  // 15
+  ()=>{const u=rnd([12,24,48,110,220]),r=rnd([4,6,8,10,12,15,20,25]);const i=parseFloat((u/r).toFixed(2)),p=parseFloat((u*i).toFixed(1));
+    const{opts,c}=shuf([
+      `${f(p)} W — P = U·I ou P = U²/R`,
+      `${f(parseFloat((p/2).toFixed(1)))} W — dividiu por 2 sem motivo`,
+      `${f(parseFloat((p*2).toFixed(1)))} W — dobrou erroneamente`,
+      `${f(parseFloat((i*i).toFixed(2)))} W — calculou I² sem multiplicar por R`
+    ],0);
+    return{
+      q1:`☀️ <strong>Painel solar residencial:</strong> Um inversor solar fornece <strong>U = ${u} V</strong> para a residência. O eletricista conecta um aquecedor de piscina que tem resistência de <strong>R = ${fR(r)}</strong>.`,
+      q2:`Para verificar se o inversor suporta a carga, precisa-se da potência do aquecedor. Qual a potência elétrica consumida?`,
+      svg:null,opts,c,exp:`I = U/R = ${u}/${r} = ${f(i)} A → P = U·I = ${u}×${f(i)} = <strong>${f(p)} W</strong>`,type:'🔢 CÁLCULO'};},
 ],
+// ── POTÊNCIA ─────────────────────────────────────────────────────
 pot:[
-  ()=>{const u=rnd([110,127,220,24,12]),i=rnd([0.5,1,1.5,2,3,4,5,8,10]);const p=parseFloat((u*i).toFixed(1));const{opts,c}=shuf([p+' W',f(u+i)+' W',parseFloat((p/2).toFixed(1))+' W',parseFloat((p*2).toFixed(1))+' W'],0);return{q:`Aparelho operando a <strong>${u}V</strong> com corrente de <strong>${f(i)}A</strong>. Potência consumida?`,svg:null,opts,c,exp:`P=U×I=${u}×${f(i)}=<strong>${f(p)} W</strong>. Potência é a taxa de consumo de energia.`,type:'🔢 CÁLCULO'};},
-  ()=>{const r=rnd([5,8,10,12,15,20,25]),i=rnd([1,1.5,2,2.5,3,4,5]);const p=parseFloat((r*i*i).toFixed(1));const{opts,c}=shuf([f(p)+' W',f(r*i)+' W',parseFloat((p/4).toFixed(1))+' W',parseFloat((p*2).toFixed(1))+' W'],0);return{q:`Resistor de <strong>${fR(r)}</strong> com corrente de <strong>${f(i)}A</strong>. Potência dissipada (Efeito Joule)?`,svg:null,opts,c,exp:`P=R×I²=${r}×${f(i)}²=${r}×${parseFloat((i*i).toFixed(2))}=<strong>${f(p)} W</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const u=rnd([110,127,220]),p=rnd([2000,3000,4400,5500,6000]);const i=parseFloat((p/u).toFixed(2));const{opts,c}=shuf([f(i)+' A',parseFloat((i/2).toFixed(2))+' A',parseFloat((i*2).toFixed(2))+' A',parseFloat((u/p).toFixed(4))+' A'],0);return{q:`Chuveiro de <strong>${p}W / ${u}V</strong>. Corrente consumida?`,svg:null,opts,c,exp:`I=P/U=${p}/${u}=<strong>${f(i)} A</strong>. Disjuntor deve suportar esta corrente.`,type:'🔢 CÁLCULO'};},
-  ()=>{const pkw=rnd([1,1.5,2,2.5,3,4,5.5]),h=rnd([1,2,3,4,5,6,8,10,12]);const e=parseFloat((pkw*h).toFixed(2));const{opts,c}=shuf([f(e)+' kWh',f(pkw+h)+' kWh',parseFloat((e*2).toFixed(2))+' kWh',parseFloat((e/2).toFixed(2))+' kWh'],0);return{q:`Aparelho de <strong>${f(pkw)}kW</strong> por <strong>${h}h</strong>. Energia consumida?`,svg:null,opts,c,exp:`E=P×t=${f(pkw)}×${h}=<strong>${f(e)} kWh</strong>. Valor cobrado na conta de luz.`,type:'🔢 CÁLCULO'};},
-  ()=>{const r1=rnd([4,5,6,8]),r2=rnd([4,5,6,8,10]),u=rnd([12,24,48]);const req=r1+r2,i=parseFloat((u/req).toFixed(2)),p1=parseFloat((r1*i*i).toFixed(1)),p2=parseFloat((r2*i*i).toFixed(1));const maior=r1>=r2?0:2;const{opts,c}=shuf([`R₁=${fR(r1)} — P=${f(p1)}W`,'Ambos dissipam igual',`R₂=${fR(r2)} — P=${f(p2)}W`,`A fonte (${u}V)`],maior);return{q:`Série U=${u}V, R₁=${fR(r1)}, R₂=${fR(r2)}. Qual resistor aquece mais?`,svg:svgS(r1,r2,u,true),opts,c,exp:`Em série I=${f(i)}A (igual). P=R·I². Maior R → maior P. P₁=${f(p1)}W, P₂=${f(p2)}W.`,type:'🔢 CÁLCULO'};},
-  ()=>{const r1=rnd([4,6,8,10]),r2=rnd([4,6,8,10]),u=rnd([12,24,48]);const p1=parseFloat((u*u/r1).toFixed(1)),p2=parseFloat((u*u/r2).toFixed(1));const menor=r1<=r2?0:2;const{opts,c}=shuf([`R₁=${fR(r1)} — P=${f(p1)}W`,'Ambos dissipam igual',`R₂=${fR(r2)} — P=${f(p2)}W`,'Nenhum'],menor);return{q:`Paralelo U=${u}V, R₁=${fR(r1)}, R₂=${fR(r2)}. Qual dissipa mais?`,svg:svgP(r1,r2,u),opts,c,exp:`Em paralelo U=${u}V (igual). P=U²/R. Menor R → maior P. P₁=${f(p1)}W, P₂=${f(p2)}W.`,type:'🔢 CÁLCULO'};},
-  {q:'Se a corrente num resistor dobra, a potência dissipada:',svg:null,opts:['Fica 4× maior (P=RI²)','Dobra','Fica pela metade','Permanece igual'],c:0,exp:'P=R·I². Dobrar I → P=R·(2I)²=4·R·I². Potência fica 4× maior. Por isso sobrecargas causam incêndios.',type:'💭 CONCEITUAL'},
-  {q:'O Efeito Joule é a conversão de energia elétrica em:',svg:null,opts:['Calor (energia térmica)','Energia mecânica','Energia química','Energia nuclear'],c:0,exp:'Efeito Joule: Q=R·I²·t. Toda corrente em resistência gera calor. Base do chuveiro, ferro elétrico, torradeira.',type:'💭 CONCEITUAL'},
-  ()=>{const u=rnd([110,127,220]),r=rnd([10,20,40,44,50,100]);const p=parseFloat((u*u/r).toFixed(1));const{opts,c}=shuf([f(p)+' W',parseFloat((u/r).toFixed(2))+' A',parseFloat((p/2).toFixed(1))+' W',parseFloat((p*r).toFixed(0))+' W'],0);return{q:`Resistência de ${fR(r)} em ${u}V. Potência dissipada (P=U²/R)?`,svg:null,opts,c,exp:`P=U²/R=${u}²/${r}=${u*u}/${r}=<strong>${f(p)} W</strong>.`,type:'🔢 CÁLCULO'};},
-  ()=>{const r1=rnd([4,5,6]),r2=rnd([6,8,12]),r3=rnd([4,6,8]),u=rnd([24,36,48]);const rp=parseFloat((r2*r3/(r2+r3)).toFixed(2)),req=parseFloat((r1+rp).toFixed(2)),it=parseFloat((u/req).toFixed(2)),pt=parseFloat((u*it).toFixed(1));const{opts,c}=shuf([f(pt)+' W',parseFloat((pt/2).toFixed(1))+' W',parseFloat((pt*2).toFixed(1))+' W',parseFloat((it*it*req).toFixed(1))+' W'],0);return{q:`Misto R₁=${fR(r1)} série + R₂=${fR(r2)}∥R₃=${fR(r3)}, U=${u}V. Potência total?`,svg:svgM(r1,r2,r3,u),opts,c,exp:`Req≈${f(req)}Ω, It=${f(it)}A → Pt=U·It=${u}×${f(it)}=<strong>${f(pt)} W</strong>`,type:'🔢 CÁLCULO'};},
-  {q:'1 kWh equivale a:',svg:null,opts:['3.600.000 J (3,6 MJ)','1000 J','3600 W','1 W × 1 segundo'],c:0,exp:'1kWh = 1000W × 3600s = 3.600.000J = 3,6MJ. Unidade usada na conta de luz.',type:'💭 CONCEITUAL'},
-
-  // Extra questions POT
-  ()=>{const u=rnd([110,127,220]),r=rnd([8,10,12,15,20,25,40,44]);const p=parseFloat((u*u/r).toFixed(1));const i=parseFloat((u/r).toFixed(2));const{opts,c}=shuf([f(p)+' W',parseFloat((p/2).toFixed(1))+' W',parseFloat((p*3).toFixed(1))+' W',f(i)+' A'],0);return{q:`Resistência de <strong>${fR(r)}</strong> em <strong>${u}V</strong>. Potência P=U²/R?`,svg:null,opts,c,exp:`P=U²/R=${u}²/${r}=${u*u}/${r}=<strong>${f(p)}W</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const p=rnd([100,200,500,750,1000,1500,2000,3000]),t=rnd([0.5,1,2,3,4,5,6,8,12,24]);const e=parseFloat((p*t/1000).toFixed(2));const custo=parseFloat((e*0.85).toFixed(2));const{opts,c}=shuf([f(e)+' kWh',parseFloat((e*2).toFixed(2))+' kWh',parseFloat((p*t).toFixed(0))+' J',parseFloat((e/2).toFixed(2))+' kWh'],0);return{q:`Aparelho de <strong>${p}W</strong> ligado <strong>${f(t)}h</strong>. Energia consumida (kWh)?`,svg:null,opts,c,exp:`E=P×t=${p}×${f(t)}=${p*t}Wh=<strong>${f(e)}kWh</strong>. Custo≈R$${custo} (a R$0,85/kWh).`,type:'🔢 CÁLCULO'};},
-  ()=>{const u=rnd([110,127,220]),p=rnd([500,800,1000,1200,1500,2000,3000,4400,5500]);const r=parseFloat((u*u/p).toFixed(1));const{opts,c}=shuf([fR(r),fR(parseFloat((r*2).toFixed(1))),parseFloat((u/p*1000).toFixed(2))+' Ω',fR(parseFloat((r/3).toFixed(1)))],0);return{q:`Aparelho de <strong>${p}W</strong> em <strong>${u}V</strong>. Resistência interna?`,svg:null,opts,c,exp:`R=U²/P=${u}²/${p}=${u*u}/${p}=<strong>${fR(r)}</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const r=rnd([5,8,10,12,15,20,25,40]),i1=rnd([1,2,3,4,5]),i2=i1*2;const p1=r*i1*i1,p2=r*i2*i2;const razao=p2/p1;const{opts,c}=shuf([razao+'× maior','2× maior','Igual',razao+'× menor'],0);return{q:`Resistor de ${fR(r)}: corrente dobra de ${i1}A para ${i2}A. Como fica a potência?`,svg:null,opts,c,exp:`P=R·I². I dobra→P=R·(2I)²=4R·I². P fica <strong>4× maior</strong>. P₁=${p1}W→P₂=${p2}W.`,type:'💭 CONCEITUAL'};},
-  ()=>{const pkw=rnd([1,2,3,4,5,6,7,8]),h=rnd([2,4,6,8,10,12]),dias=30;const kwh=pkw*h*dias;const custo=parseFloat((kwh*0.85).toFixed(2));const{opts,c}=shuf([kwh+' kWh',f(pkw*h)+' kWh',f(pkw*dias)+' kWh',parseFloat((kwh/2).toFixed(0))+' kWh'],0);return{q:`Equipamento de <strong>${pkw}kW</strong> ligado <strong>${h}h/dia</strong> por 30 dias. Consumo mensal?`,svg:null,opts,c,exp:`E=${pkw}×${h}×30=<strong>${kwh}kWh</strong>/mês. Custo≈R$${custo}.`,type:'🔢 CÁLCULO'};},
-  {q:'Uma resistência tem potência P com corrente I. Se a corrente for triplicada:',svg:null,opts:['P fica 9× maior (P=RI²)','P fica 3× maior','P fica 6× maior','P fica igual'],c:0,exp:'P=R·I². I→3I: P_nova=R·(3I)²=9·R·I²=9·P. Potência fica 9 vezes maior.',type:'💭 CONCEITUAL'},
-  ()=>{const r1=rnd([3,4,5,6]),r2=rnd([3,4,5,6]),r3=rnd([3,4,5,6]),u=rnd([18,24,36]);const req=r1+r2+r3,i=parseFloat((u/req).toFixed(2)),p1=parseFloat((r1*i*i).toFixed(1)),p2=parseFloat((r2*i*i).toFixed(1)),p3=parseFloat((r3*i*i).toFixed(1)),pt=parseFloat((u*i).toFixed(1));const maior=r1>=r2&&r1>=r3?0:r2>=r1&&r2>=r3?1:2;const{opts,c}=shuf([`R₁=${fR(r1)} → P=${f(p1)}W`,`R₂=${fR(r2)} → P=${f(p2)}W`,`R₃=${fR(r3)} → P=${f(p3)}W`,`Todos igual → P=${f(pt/3)}W`],maior);return{q:`Série: R₁=${fR(r1)}, R₂=${fR(r2)}, R₃=${fR(r3)}, U=${u}V. Qual dissipa mais calor?`,svg:svgS(r1,r2,u,true),opts,c,exp:`I=${f(i)}A igual. P=R·I². Maior R→mais calor. P₁=${f(p1)}W, P₂=${f(p2)}W, P₃=${f(p3)}W.`,type:'🔢 CÁLCULO'};},
-  {q:'Reduzindo o consumo de um aparelho de 1000W para 500W, o consumo de energia em 1 hora:',svg:null,opts:['Cai à metade (0,5kWh)','Dobra','Permanece igual','Cai para zero'],c:0,exp:'E=P·t. Reduzindo P pela metade, E também cai pela metade. 1kW×1h=1kWh→0,5kW×1h=0,5kWh.',type:'💭 CONCEITUAL'},
-  ()=>{const u=rnd([110,127,220]),i=rnd([1,1.5,2,3,5,8,10,15,20,25]);const p=parseFloat((u*i).toFixed(0));const{opts,c}=shuf([f(p)+' W',parseFloat((p/u).toFixed(2))+' A',parseFloat((p*2).toFixed(0))+' W',f(u*2)+' W'],0);return{q:`Disjuntor protege um circuito de <strong>${u}V</strong> com corrente de <strong>${f(i)}A</strong>. Potência máxima do circuito?`,svg:null,opts,c,exp:`P=U·I=${u}×${f(i)}=<strong>${f(p)}W</strong>. Esta é a potência que o disjuntor deve suportar.`,type:'🔢 CÁLCULO'};},
-  {q:'Por que fios elétricos sobrecarregados (corrente acima da capacidade) causam incêndios?',svg:null,opts:['P=RI²: corrente excedente gera calor excessivo no fio (Efeito Joule)','Os fios geram faíscas elétricas ao sobreaquecer','O campo magnético ignita o isolamento','A tensão aumenta quando a corrente sobe'],c:0,exp:'P=R·I². Corrente excessiva → potência dissipada muito alta → fio aquece → derrete o isolamento → incêndio. Por isso a bitola correta é essencial.',type:'💭 CONCEITUAL'},
-
-  // ── POT EXTRA BATCH 2 ─────────────────────────────────────────
-  ()=>{const p=rnd([500,750,1000,1200,1500,2000,2400,3000]),t=rnd([0.5,1,1.5,2,3,4,5,6,8,10]);const e=parseFloat((p*t/1000).toFixed(2));const{opts,c}=shuf([f(e)+' kWh',f(parseFloat((p*t).toFixed(0)))+' J',f(parseFloat((e*3).toFixed(2)))+' kWh',f(parseFloat((e/3).toFixed(2)))+' kWh'],0);return{q:`Aparelho de <strong>${p} W</strong> ligado por <strong>${f(t)} h</strong>. Energia consumida em kWh?`,svg:null,opts,c,exp:`E = P×t = ${p}W × ${f(t)}h = ${p*t}Wh = <strong>${f(e)} kWh</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const u=rnd([110,127,220]),i=rnd([0.5,1,1.5,2,3,5,8,10,15,20,25]);const p=parseFloat((u*i).toFixed(0));const{opts,c}=shuf([f(p)+' W',f(u+i)+' W',f(parseFloat((p/3).toFixed(0)))+' W',f(parseFloat((p*2).toFixed(0)))+' W'],0);return{q:`Aparelho em <strong>${u} V</strong> com <strong>${f(i)} A</strong>. Potência = U·I = ?`,svg:null,opts,c,exp:`P = U × I = ${u} × ${f(i)} = <strong>${f(p)} W</strong>`,type:'🔢 CÁLCULO'};},
-  {q:'James Joule era um físico autodidata que financiou seus experimentos com o dinheiro de:',svg:null,opts:['A cervejaria da família','Uma bolsa do governo britânico','A Real Academia de Ciências','Uma herança de um tio'],c:0,exp:'Joule (1818–1889) era filho de um rico cervejeiro inglês. Usou o laboratório caseiro e o dinheiro da família para seus experimentos sobre calor e energia.',type:'💭 HISTÓRICO'},
-  ()=>{const r=rnd([5,8,10,12,15,20,25,40]),i=rnd([1,2,3,4,5,6]);const p=r*i*i;const t=rnd([1,2,3,4,5,10,30,60]);const q=p*t;const{opts,c}=shuf([f(q)+' J',f(parseFloat((q/4).toFixed(0)))+' J',f(parseFloat((q*2).toFixed(0)))+' J',f(parseFloat((q/2).toFixed(0)))+' J'],0);return{q:`Resistor <strong>${fR(r)}</strong> com corrente <strong>${i}A</strong> por <strong>${t}s</strong>. Calor gerado Q=R·I²·t?`,svg:null,opts,c,exp:`Q = R·I²·t = ${r}×${i}²×${t} = ${r}×${i*i}×${t} = <strong>${f(q)} J</strong>`,type:'🔢 CÁLCULO'};},
-  {q:'Uma lâmpada incandescente de 100 W e uma LED de 10 W produzem luminosidade semelhante. A incandescente desperdiça mais energia porque:',svg:null,opts:['Converte ~95% da energia em calor (Efeito Joule) e só ~5% em luz','A LED usa tensão maior','A incandescente opera em CC enquanto LED usa CA','O filamento tem maior área'],c:0,exp:'Lâmpadas incandescentes: filamento aquece até ~2.700K e emite luz. Cerca de 90-95% da energia vira calor (Joule) e apenas 5-10% vira luz visível.',type:'💭 CONCEITUAL'},
-  ()=>{const r1=rnd([4,5,6,8]),r2=rnd([8,10,12,16]),u=rnd([12,24,36,48]);const req=parseFloat((r1*r2/(r1+r2)).toFixed(2)),it=parseFloat((u/req).toFixed(2)),p1=parseFloat((u*u/r1).toFixed(1)),p2=parseFloat((u*u/r2).toFixed(1)),pt=parseFloat((u*it).toFixed(1));const{opts,c}=shuf([f(pt)+' W',f(parseFloat((pt/2).toFixed(1)))+' W',f(p1)+' W',f(p2)+' W'],0);return{q:`Paralelo: R₁=${fR(r1)}, R₂=${fR(r2)}, U=${u}V. Potência TOTAL?`,svg:svgP(r1,r2,u),opts,c,exp:`Req=${f(req)}Ω, It=${f(it)}A → Ptotal = U×It = ${u}×${f(it)} = <strong>${f(pt)} W</strong>`,type:'🔢 CÁLCULO'};},
-  {q:'O custo de operação de um aparelho elétrico depende principalmente de:',svg:null,opts:['Potência (W) × tempo de uso × tarifa (R$/kWh)','Apenas da tensão da tomada (127V ou 220V)','Apenas do número de tomadas no cômodo','Da resistência interna do aparelho'],c:0,exp:'Custo = E × tarifa = P(kW) × t(h) × R$/kWh. Trocar aparelhos por modelos mais eficientes (menor W) reduz a conta de luz proporcionalmente.',type:'💭 CONCEITUAL'},
-  ()=>{const u=rnd([110,127,220]),p=rnd([800,1000,1200,1500,2000,3000,4400,5500]);const i=parseFloat((p/u).toFixed(2));const r=parseFloat((u*u/p).toFixed(1));const{opts,c}=shuf([fR(r),fR(parseFloat((r*2).toFixed(1))),f(i)+' Ω',fR(parseFloat((r/3).toFixed(1)))],0);return{q:`Aparelho de <strong>${p}W / ${u}V</strong>. Resistência do elemento aquecedor?`,svg:null,opts,c,exp:`R = U²/P = ${u}²/${p} = ${u*u}/${p} = <strong>${fR(r)}</strong>`,type:'🔢 CÁLCULO'};},
-  {q:'Em um circuito série, qual resistor representa maior risco de superaquecimento?',svg:null,opts:['O de maior resistência (P = R·I² — mesma I, maior R → maior P)','O de menor resistência','Todos aquecem igual','O que fica no centro do circuito'],c:0,exp:'Em série a corrente é igual em todos. P = R·I². Maior R → maior potência dissipada como calor → maior risco.',type:'💭 CONCEITUAL'},
+  // 1
+  ()=>{const u=rnd([110,127,220]),p=rnd([2000,3000,4400,5500,6000]);const i=parseFloat((p/u).toFixed(2));
+    const{opts,c}=shuf([
+      `${f(i)} A — I = P/U (correto)`,
+      `${f(parseFloat((p*u).toFixed(0)))} A — multiplicou ao invés de dividir`,
+      `${f(parseFloat((i/2).toFixed(2)))} A — metade da corrente correta`,
+      `${f(parseFloat((u/p).toFixed(4)))} A — inverteu P e U`
+    ],0);
+    return{
+      q1:`🚿 <strong>Escolha do chuveiro:</strong> Você vai trocar o chuveiro e precisa verificar se o disjuntor suporta a carga. O novo chuveiro tem potência de <strong>${p} W</strong>.`,
+      q2:`A rede elétrica da casa é de <strong>${u} V</strong>. Qual a corrente que o chuveiro vai consumir? (I = P/U)`,
+      svg:null,opts,c,exp:`I = P/U = ${p}/${u} = <strong>${f(i)} A</strong>. Use disjuntor de ${i<=20?20:25} A (margem de 25%).`,type:'🔢 APLICAÇÃO'};},
+  // 2
+  ()=>{const r=rnd([5,8,10,12,15,20,25]),i=rnd([1,1.5,2,2.5,3,4,5]);const p=parseFloat((r*i*i).toFixed(1));
+    const{opts,c}=shuf([
+      `${f(p)} W — P = R·I² (Efeito Joule)`,
+      `${f(r*i)} W — calculou R×I (não é potência)`,
+      `${f(parseFloat((p/4).toFixed(1)))} W — esqueceu o quadrado da corrente`,
+      `${f(parseFloat((p*2).toFixed(1)))} W — dobrou desnecessariamente`
+    ],0);
+    return{
+      q1:`🔥 <strong>Efeito Joule em resistor:</strong> Um resistor de aquecimento industrial tem <strong>R = ${fR(r)}</strong>. O técnico mede com o amperímetro: a corrente que o percorre é de <strong>I = ${f(i)} A</strong>.`,
+      q2:`Para verificar se o resistor não vai queimar, precisa-se da potência dissipada como calor. Qual o valor? (P = R·I²)`,
+      svg:null,opts,c,exp:`P = R·I² = ${r}×${f(i)}² = ${r}×${parseFloat((i*i).toFixed(2))} = <strong>${f(p)} W</strong>`,type:'🔢 CÁLCULO'};},
+  // 3
+  ()=>{const pkw=rnd([1,1.5,2,2.5,3,4,5.5]),h=rnd([2,3,4,5,6,8,10,12]);const e=parseFloat((pkw*h).toFixed(2));const custo=parseFloat((e*0.85).toFixed(2));
+    const{opts,c}=shuf([
+      `${f(e)} kWh — E = P×t`,
+      `${f(pkw+h)} kWh — somou ao invés de multiplicar`,
+      `${f(parseFloat((e*2).toFixed(2)))} kWh — dobrou sem motivo`,
+      `${f(parseFloat((e/2).toFixed(2)))} kWh — dividiu por 2 erroneamente`
+    ],0);
+    return{
+      q1:`💰 <strong>Conta de luz:</strong> Um estudante quer calcular quanto custa deixar o ar-condicionado de <strong>${f(pkw)} kW</strong> ligado todo o dia para estudar.`,
+      q2:`O ar fica ligado por <strong>${h} horas</strong>. Qual a energia consumida em kWh? (E = P×t — depois multiplique por R$ 0,85 para o custo)`,
+      svg:null,opts,c,exp:`E = P×t = ${f(pkw)}×${h} = <strong>${f(e)} kWh</strong>. Custo: ${f(e)}×0,85 = R$ ${f(custo)}`,type:'🔢 APLICAÇÃO'};},
+  // 4
+  ()=>{const r1=rnd([4,5,6,8]),r2=rnd([4,5,6,8,10]),u=rnd([12,24,48]);const req=r1+r2,i=parseFloat((u/req).toFixed(2)),p1=parseFloat((r1*i*i).toFixed(1)),p2=parseFloat((r2*i*i).toFixed(1));const maiorIdx=r1>=r2?0:2;
+    const{opts,c}=shuf([
+      `R₁ = ${fR(r1)} — P₁ = ${f(p1)} W (maior R, mais calor em série)`,
+      'Ambos dissipam igual — corrente é a mesma em série',
+      `R₂ = ${fR(r2)} — P₂ = ${f(p2)} W (maior R, mais calor em série)`,
+      `A fonte (${u} V) — a fonte gera calor, não os resistores`
+    ],maiorIdx);
+    return{
+      q1:`🌡️ <strong>Aquecedor de aquário em série:</strong> Dois aquecedores em <strong>série</strong> são ligados a uma fonte de <strong>${u} V</strong>. Os resistores têm R₁ = ${fR(r1)} e R₂ = ${fR(r2)}.`,
+      q2:`Em circuitos série, a mesma corrente passa em todos os componentes. Sabendo que I = ${f(i)} A, qual dos aquecedores dissipa <strong>mais calor</strong>?`,
+      svg:svgS(r1,r2,u,true),opts,c,exp:`Série: I = ${f(i)} A (igual). P = R·I². Maior R → maior P. P₁=${f(p1)}W, P₂=${f(p2)}W.`,type:'🔢 ANÁLISE'};},
+  // 5
+  ()=>{const r1=rnd([4,6,8,10]),r2=rnd([4,6,8,10]),u=rnd([12,24,48]);const p1=parseFloat((u*u/r1).toFixed(1)),p2=parseFloat((u*u/r2).toFixed(1));const menorIdx=r1<=r2?0:2;
+    const{opts,c}=shuf([
+      `R₁ = ${fR(r1)} — P₁ = ${f(p1)} W (menor R, mais corrente, mais calor em paralelo)`,
+      'Ambos dissipam igual — mesma tensão em paralelo',
+      `R₂ = ${fR(r2)} — P₂ = ${f(p2)} W (menor R, mais corrente, mais calor)`,
+      'Nenhum — paralelo distribui uniformemente'
+    ],menorIdx);
+    return{
+      q1:`💡 <strong>Iluminação paralela:</strong> Duas lâmpadas com R₁ = ${fR(r1)} e R₂ = ${fR(r2)} são ligadas em <strong>paralelo</strong> na rede de <strong>${u} V</strong>.`,
+      q2:`Em paralelo, cada lâmpada recebe a mesma tensão. Qual das duas dissipa <strong>mais potência</strong>? (P = U²/R — atenção ao efeito do denominador)`,
+      svg:svgP(r1,r2,u),opts,c,exp:`Paralelo: mesma tensão ${u}V. P = U²/R. Menor R → maior P. P₁=${f(p1)}W, P₂=${f(p2)}W.`,type:'🔢 ANÁLISE'};},
+  // 6
+  {
+    q1:`⚠️ <strong>Incêndio elétrico:</strong> Um investigador analisa um incêndio causado por sobrecarga. O laudo indica que a corrente num resistor de 10 Ω triplicou em relação ao projeto original (passou de I para 3I).`,
+    q2:`Se a corrente era I e triplicou para 3I, em quantas vezes a potência dissipada como calor aumentou? Use P = R·I² e compare P_nova/P_original.`,
+    svg:null,
+    opts:['9 vezes — corrente triplicou, P = R·I², portanto P ×(3)² = ×9','3 vezes — triplicou a corrente, triplicou a potência (raciocínio linear)','6 vezes — somou em vez de elevar ao quadrado','27 vezes — elevou ao cubo incorretamente'],
+    c:0,exp:'P = R·I². P_nova = R·(3I)² = 9R·I². Potência 9× maior! É por isso que sobrecargas causam incêndios — o aquecimento cresce muito rapidamente.',type:'💭 ANÁLISE'},
+  // 7
+  ()=>{const u=rnd([110,127,220]),r=rnd([10,20,40,44,50,100]);const p=parseFloat((u*u/r).toFixed(1));
+    const{opts,c}=shuf([
+      `${f(p)} W — P = U²/R`,
+      `${f(parseFloat((u/r).toFixed(2)))} A — calculou corrente, não potência`,
+      `${f(parseFloat((p/2).toFixed(1)))} W — dividiu por 2 incorretamente`,
+      `${f(parseFloat((p*r).toFixed(0)))} W — multiplicou por R ao invés de dividir`
+    ],0);
+    return{
+      q1:`🔌 <strong>Ferro de passar roupas:</strong> O ferro elétrico é essencialmente um resistor que converte energia elétrica em calor. Seu elemento aquecedor tem resistência de <strong>${fR(r)}</strong>.`,
+      q2:`Ao ser plugado na tomada de <strong>${u} V</strong>, qual a potência térmica gerada? (P = U²/R — útil quando não se tem a corrente)`,
+      svg:null,opts,c,exp:`P = U²/R = ${u}²/${r} = ${u*u}/${r} = <strong>${f(p)} W</strong>`,type:'🔢 CÁLCULO'};},
+  // 8
+  {
+    q1:`⚡ <strong>1 kWh na conta de luz:</strong> A distribuidora de energia cobra por kWh (quilowatt-hora). Um aluno confunde kWh com Joule e erra a conta. Um professor explica: "1 kWh é a energia de 1 kW usado por 1 hora".`,
+    q2:`Convertendo corretamente: 1 kWh = 1.000 W × 3.600 s. Qual o valor em Joules?`,
+    svg:null,
+    opts:['3.600.000 J (3,6 MJ) — 1000 W × 3600 s','1.000 J — confundiu kWh com kJ','3.600 J — não converteu kW para W','1.000.000 J (1 MJ) — esqueceu fator 3,6'],
+    c:0,exp:'1 kWh = 1000 W × 3600 s = 3.600.000 J = 3,6 MJ. A conta de luz usa kWh por ser grandeza mais prática (Joule seria número gigantesco).',type:'💭 CONCEITUAL'},
+  // 9
+  ()=>{const r1=rnd([4,5,6]),r2=rnd([6,8,12]),r3=rnd([4,6,8]),u=rnd([24,36,48]);const rp=parseFloat((r2*r3/(r2+r3)).toFixed(2)),req=parseFloat((r1+rp).toFixed(2)),it=parseFloat((u/req).toFixed(2)),pt=parseFloat((u*it).toFixed(1));
+    const{opts,c}=shuf([
+      `${f(pt)} W — P = U·It (potência total)`,
+      `${f(parseFloat((pt/2).toFixed(1)))} W — dividiu por 2 erroneamente`,
+      `${f(parseFloat((pt*2).toFixed(1)))} W — dobrou o resultado`,
+      `${f(parseFloat((it*it*req).toFixed(1)))} W — calculou P = I²R corretamente também`
+    ],0);
+    return{
+      q1:`🏭 <strong>Painel de controle industrial:</strong> Um painel usa circuito misto: R₁ = ${fR(r1)} em série com R₂ = ${fR(r2)} e R₃ = ${fR(r3)} em paralelo. A fonte é de <strong>${u} V</strong>.`,
+      q2:`O engenheiro precisa da potência total consumida para especificar a fonte de alimentação. Qual a potência total? (Dica: Req ≈ ${f(req)} Ω, It ≈ ${f(it)} A)`,
+      svg:svgM(r1,r2,r3,u),opts,c,exp:`Req ≈ ${f(req)} Ω, It = ${f(it)} A → Pt = U·It = ${u}×${f(it)} = <strong>${f(pt)} W</strong>`,type:'🔢 CÁLCULO'};},
+  // 10
+  ()=>{const p=rnd([1000,1500,2000,2500,4000]),u=rnd([110,127,220]);const i=parseFloat((p/u).toFixed(2));const disjuntor=i<=10?10:i<=15?15:i<=20?20:25;
+    const{opts,c}=shuf([
+      `${f(i)} A — disjuntor mínimo de ${disjuntor} A`,
+      `${f(parseFloat((i*2).toFixed(2)))} A — dobrou sem justificativa`,
+      `${f(parseFloat((u/p*100).toFixed(2)))} A — inverteu a fórmula P = U·I`,
+      `${f(parseFloat((i/3).toFixed(2)))} A — dividiu por 3 erroneamente`
+    ],0);
+    return{
+      q1:`❄️ <strong>Instalação de ar-condicionado:</strong> Um instalador vai colocar um ar-condicionado de <strong>${p} W</strong>. Antes de ligar, precisa verificar se o disjuntor existente suporta a carga.`,
+      q2:`A tensão da instalação é <strong>${u} V</strong>. Qual a corrente do ar-condicionado? (Use I = P/U — o disjuntor deve ter valor acima de I)`,
+      svg:null,opts,c,exp:`I = P/U = ${p}/${u} = <strong>${f(i)} A</strong>. Disjuntor recomendado: ${disjuntor} A (margem de segurança de 25%).`,type:'🔢 APLICAÇÃO'};},
+  // 11
+  {
+    q1:`🔋 <strong>Bateria de celular descarregando:</strong> Uma bateria de 3,7 V alimenta um processador de smartphone. A potência total consumida é P = 2 W quando o celular está processando fotos.`,
+    q2:`Com esses dados (U = 3,7 V, P = 2 W), qual a corrente drenada da bateria? Lembre: I = P/U. Um valor alto drena a bateria mais rápido.`,
+    svg:null,
+    opts:['≈ 0,54 A — I = 2/3,7 ≈ 0,54 A','≈ 7,4 A — multiplicou P×U','≈ 0,27 A — dividiu por 2 desnecessariamente','≈ 1,85 A — calculou 2×(3,7/4)'],
+    c:0,exp:'I = P/U = 2/3,7 ≈ 0,54 A. Bateria de 3.000 mAh = 3 Ah: t = 3/0,54 ≈ 5,5 h de uso intenso.',type:'🔢 APLICAÇÃO'},
+  // 12
+  ()=>{const u=rnd([110,127,220]),i=rnd([0.5,1,1.5,2,3,5,10]);const p=parseFloat((u*i).toFixed(1));
+    const{opts,c}=shuf([
+      `${f(p)} W — P = U·I`,
+      `${f(u+i)} W — somou (dimensionalmente errado)`,
+      `${f(parseFloat((p/i).toFixed(1)))} W — dividiu por I (recalculou a tensão)`,
+      `${f(parseFloat((p*2).toFixed(1)))} W — dobrou por engano`
+    ],0);
+    return{
+      q1:`🏠 <strong>Medidor de energia:</strong> Um voltímetro na tomada marca <strong>${u} V</strong> e o amperímetro do painel indica <strong>${f(i)} A</strong> para um aparelho doméstico específico.`,
+      q2:`O técnico precisa da potência para registrar no laudo. Qual a potência do aparelho medida naquele momento? (P = U·I)`,
+      svg:null,opts,c,exp:`P = U×I = ${u}×${f(i)} = <strong>${f(p)} W</strong>`,type:'🔢 CÁLCULO'};},
 ],
+// ── CAPACITORES ──────────────────────────────────────────────────
 cap:[
-  ()=>{const cc=rnd([10,22,47,100,220,470]),u=rnd([5,10,12,24,50,100]);const q=parseFloat((cc*u/1000).toFixed(3));const{opts,c}=shuf([f(q)+' mC',f(cc/u)+' mC',parseFloat((q*2).toFixed(3))+' mC',parseFloat((q/2).toFixed(3))+' mC'],0);return{q:`Capacitor de <strong>${cc}μF</strong> carregado a <strong>${u}V</strong>. Carga armazenada? <em style="color:var(--txt2);font-size:.85rem">(Q=C·U)</em>`,svg:null,opts,c,exp:`Q=C×U=${cc}×10⁻⁶×${u}=<strong>${f(q)} mC</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const cc=rnd([10,20,50,100,200]),u=rnd([10,20,50,100]);const e=parseFloat((.5*cc*1e-6*u*u*1000).toFixed(3));const{opts,c}=shuf([f(e)+' mJ',parseFloat((e*2).toFixed(3))+' mJ',parseFloat((e/2).toFixed(3))+' mJ',f(cc*u/1000)+' mC'],0);return{q:`Capacitor de <strong>${cc}μF</strong> a <strong>${u}V</strong>. Energia armazenada? <em style="color:var(--txt2);font-size:.85rem">(E=½CU²)</em>`,svg:null,opts,c,exp:`E=½CU²=½×${cc}×10⁻⁶×${u}²=<strong>${f(e)} mJ</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const c1=rnd([10,20,47,100]),c2=rnd([10,20,47,100]);const ceq=parseFloat((c1*c2/(c1+c2)).toFixed(2));const{opts,c}=shuf([f(ceq)+' μF',(c1+c2)+' μF',f(ceq*2)+' μF',Math.max(c1,c2)+' μF'],0);return{q:`Capacitores de <strong>${c1}μF</strong> e <strong>${c2}μF</strong> em série. Ceq=?`,svg:null,opts,c,exp:`Série: 1/Ceq=1/${c1}+1/${c2}=(${c1+c2})/${c1*c2} → Ceq≈<strong>${f(ceq)} μF</strong> (menor que qualquer C individual)`,type:'🔢 CÁLCULO'};},
-  ()=>{const c1=rnd([10,22,47,100]),c2=rnd([10,22,47,100]);const ceq=c1+c2;const{opts,c}=shuf([f(ceq)+' μF',parseFloat((c1*c2/(c1+c2)).toFixed(2))+' μF',(ceq*2)+' μF',Math.max(c1,c2)+' μF'],0);return{q:`Capacitores de <strong>${c1}μF</strong> e <strong>${c2}μF</strong> em paralelo. Ceq=?`,svg:null,opts,c,exp:`Paralelo: Ceq=C₁+C₂=${c1}+${c2}=<strong>${ceq} μF</strong> (inverso dos resistores!)`,type:'🔢 CÁLCULO'};},
-  {q:'Em associação série de capacitores a capacitância equivalente é:',svg:null,opts:['Menor que a menor capacitância individual','Maior que a maior capacitância individual','Igual à soma direta','Igual à média aritmética'],c:0,exp:'Série: 1/Ceq=Σ1/Cᵢ → Ceq é MENOR que o menor C. (Inverso dos resistores em série!)',type:'💭 CONCEITUAL'},
-  {q:'Capacitor em CC estabilizado age como:',svg:null,opts:['Circuito aberto (bloqueio completo)','Fio condutor (curto-circuito)','Resistor de 1Ω','Indutor'],c:0,exp:'Em CC estável, capacitor carregado bloqueia a corrente (dU/dt=0). Útil para bloquear CC e deixar passar CA.',type:'💭 CONCEITUAL'},
-  {q:'Dobrando a tensão num capacitor, a energia armazenada:',svg:null,opts:['Fica 4× maior (E=½CU²)','Dobra','Fica 8× maior','Permanece igual'],c:0,exp:'E=½CU². Dobrar U→ E=½C(2U)²=4×(½CU²). Energia fica 4× maior (relação quadrática).',type:'💭 CONCEITUAL'},
-  ()=>{const c=rnd([50,100,200,500]),u1=rnd([10,20,50]),u2=u1*2;const e1=parseFloat((.5*c*1e-6*u1*u1*1000).toFixed(3)),e2=parseFloat((.5*c*1e-6*u2*u2*1000).toFixed(3));const{opts,c3}=shuf([f(e2)+' mJ',f(e1*2)+' mJ',f(e2*2)+' mJ',f(e1)+' mJ'],0);return{q:`C=${c}μF: E=${f(e1)}mJ a ${u1}V. Tensão dobra para ${u2}V. Nova energia?`,svg:null,opts:opts,c:c3,exp:`Tensão dobrou → E fica 4× maior = <strong>${f(e2)} mJ</strong>`,type:'🔢 CÁLCULO'};},
-  {q:'Desfibriladores usam capacitores porque:',svg:null,opts:['Armazenam e liberam energia rapidamente (ms)','Aumentam a resistência do circuito','Filtram frequências altas','Convertem CC em CA'],c:0,exp:'Capacitores carregam lentamente e descarregam em milissegundos — ideal para o pulso de choque do desfibrilador.',type:'💭 CONCEITUAL'},
-  ()=>{const cc=rnd([100,220,470,1000]),r_k=rnd([10,20,50,100]);const tau=parseFloat((r_k*cc/1000).toFixed(2));const{opts,c}=shuf([f(tau)+' s',parseFloat((tau*2).toFixed(2))+' s',parseFloat((tau/2).toFixed(2))+' s',f(r_k*cc)+' s'],0);return{q:`RC: R=${r_k}kΩ, C=${cc}μF. Constante de tempo τ=R·C=?`,svg:null,opts,c,exp:`τ=R×C=${r_k}×10³×${cc}×10⁻⁶=<strong>${f(tau)} s</strong>. Tempo para atingir 63% da carga final.`,type:'🔢 CÁLCULO'};},
-
-  // Extra questions CAP
-  ()=>{const cc=rnd([47,100,220,470,1000,2200]),u=rnd([5,10,12,15,24,50]);const q=parseFloat((cc*u/1000).toFixed(3));const e=parseFloat((.5*cc*1e-6*u*u*1000).toFixed(3));const{opts,c}=shuf([f(q)+' mC',parseFloat((q*3).toFixed(3))+' mC',f(cc/u/10)+' F',parseFloat((q/3).toFixed(3))+' mC'],0);return{q:`Capacitor de <strong>${cc}μF</strong> com tensão de <strong>${u}V</strong>. Carga armazenada?`,svg:null,opts,c,exp:`Q=C·U=${cc}×10⁻⁶×${u}=<strong>${f(q)}mC</strong>. Energia armazenada: E=${f(e)}mJ`,type:'🔢 CÁLCULO'};},
-  ()=>{const c1=rnd([22,47,100,220,330,470]),c2=rnd([22,47,100,220,330,470]),c3=rnd([22,47,100,220]);const ceq=c1+c2+c3;const{opts,c}=shuf([ceq+' μF',parseFloat((1/(1/c1+1/c2+1/c3)).toFixed(2))+' μF',parseFloat(((c1+c2+c3)/3).toFixed(0))+' μF',Math.max(c1,c2,c3)+' μF'],0);return{q:`Três capacitores ${c1}μF, ${c2}μF e ${c3}μF em <strong>paralelo</strong>. Ceq=?`,svg:null,opts,c,exp:`Paralelo: Ceq=C₁+C₂+C₃=${c1}+${c2}+${c3}=<strong>${ceq}μF</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const c1=rnd([10,22,47,100]),c2=rnd([10,22,47,100]),c3=rnd([10,22,47,100]);const ceq=parseFloat((1/(1/c1+1/c2+1/c3)).toFixed(2));const{opts,c}=shuf([f(ceq)+' μF',(c1+c2+c3)+' μF',Math.min(c1,c2,c3)+' μF',parseFloat((ceq*3).toFixed(2))+' μF'],0);return{q:`Três capacitores ${c1}μF, ${c2}μF e ${c3}μF em <strong>série</strong>. Ceq=?`,svg:null,opts,c,exp:`Série: 1/Ceq=1/${c1}+1/${c2}+1/${c3} → Ceq≈<strong>${f(ceq)}μF</strong> (menor que menor C!)`,type:'🔢 CÁLCULO'};},
-  {q:'Em qual situação um capacitor carregado libera sua energia mais rapidamente?',svg:null,opts:['Resistência de descarga menor (τ=RC menor)','Resistência de descarga maior','Capacitância menor','Tensão inicial maior'],c:0,exp:'τ=RC. R menor→τ menor→descarga mais rápida. Desfibrilador usa pequena R para descarregar rapidamente.',type:'💭 CONCEITUAL'},
-  ()=>{const cc=rnd([100,220,470,1000]),u=rnd([12,24,50,100,200]);const e=parseFloat((.5*cc*1e-6*u*u).toFixed(3));const{opts,c}=shuf([f(e)+' J',parseFloat((e*1000).toFixed(1))+' mJ',parseFloat((e*4).toFixed(3))+' J',parseFloat((e/2).toFixed(3))+' J'],0);return{q:`Capacitor de <strong>${cc}μF</strong> carregado a <strong>${u}V</strong>. Energia E=½CU² em Joules?`,svg:null,opts,c,exp:`E=½×${cc}×10⁻⁶×${u}²=<strong>${f(e)}J</strong>`,type:'🔢 CÁLCULO'};},
-  {q:'Um capacitor de 1000μF está carregado a 100V. A tensão é reduzida para 50V. A energia armazenada:',svg:null,opts:['Cai para ¼ do valor original (E∝U²)','Cai para metade','Permanece igual','Dobra'],c:0,exp:'E=½CU². U cai à metade→E=½C(U/2)²=¼(½CU²). Energia cai para ¼.',type:'💭 CONCEITUAL'},
-  ()=>{const r_k=rnd([1,2,5,10,22,47]),cc=rnd([10,22,47,100,220,470]);const tau=parseFloat((r_k*1000*cc*1e-6).toFixed(3));const{opts,c}=shuf([f(tau)+' s',parseFloat((tau*2).toFixed(3))+' s',parseFloat((tau/2).toFixed(3))+' s',f(r_k*cc)+' s'],0);return{q:`Circuito RC: R=${r_k}kΩ, C=${cc}μF. Constante de tempo τ=R·C=?`,svg:null,opts,c,exp:`τ=${r_k}×10³×${cc}×10⁻⁶=<strong>${f(tau)}s</strong>. Após 5τ=${f(tau*5)}s o capacitor está praticamente carregado.`,type:'🔢 CÁLCULO'};},
-  {q:'A memória RAM do computador usa capacitores DRAM. Por que ela perde dados sem energia elétrica?',svg:null,opts:['Capacitores têm corrente de fuga — perdem carga sem refresh','Capacitores se descarregam imediatamente ao desligar','A tensão do capacitor aumenta sem energia','RAM usa indutores, não capacitores'],c:0,exp:'Capacitores DRAM perdem carga (corrente de fuga). Precisam ser "refrescados" milhares de vezes/segundo. Sem energia elétrica, a carga se perde e os dados somem.',type:'💭 CONCEITUAL'},
-
-  // ── CAP EXTRA BATCH 2 ──────────────────────────────────────────
-  ()=>{const c1=rnd([10,22,47,100,220]),c2=c1;const cp=c1+c2;const cs=parseFloat((c1*c2/(c1+c2)).toFixed(1));const{opts,c}=shuf([`Série: ${f(cs)}μF, Paralelo: ${cp}μF`,`Série: ${cp}μF, Paralelo: ${f(cs)}μF`,`Ambos: ${c1}μF`,`Série: ${f(cs)}μF, Paralelo: ${f(cs)}μF`],0);return{q:`Dois capacitores de <strong>${c1}μF cada</strong>. Ceq em série e em paralelo?`,svg:null,opts,c,exp:`Série: Ceq = C/2 = ${f(cs)}μF. Paralelo: Ceq = 2C = ${cp}μF. Paralelo soma, série divide!`,type:'🔢 CÁLCULO'};},
-  {q:'Michael Faraday era filho de ferreiro e nunca cursou uma universidade. Descobriu a indução eletromagnética em:',svg:null,opts:['1831','1827','1845','1820'],c:0,exp:'Faraday (1791–1867) descobriu a indução em 1831, inventou o motor elétrico e o gerador. A unidade Farad (F) homenageia seu legado.',type:'💭 HISTÓRICO'},
-  ()=>{const cc=rnd([100,220,470,1000,2200]),u=rnd([10,15,20,24,50,100]);const q=parseFloat((cc*u/1000).toFixed(2));const e_mj=parseFloat((.5*cc*1e-6*u*u*1000).toFixed(2));const{opts,c}=shuf([f(q)+' mC',f(parseFloat((q*2).toFixed(2)))+' mC',f(cc*u)+' μC·V',f(parseFloat((q/2).toFixed(2)))+' mC'],0);return{q:`C=<strong>${cc}μF</strong>, U=<strong>${u}V</strong>. Carga Q = C·U = ?`,svg:null,opts,c,exp:`Q = C×U = ${cc}×10⁻⁶ × ${u} = <strong>${f(q)} mC</strong>. Energia armazenada: ${f(e_mj)} mJ`,type:'🔢 CÁLCULO'};},
-  {q:'Qual a principal diferença entre associar capacitores em série vs. em paralelo?',svg:null,opts:['Série: Ceq menor (como dividir); Paralelo: Ceq maior (como somar placas)','Série: Ceq maior; Paralelo: Ceq menor','Não há diferença — Ceq é sempre igual','Série aumenta tensão máxima; Paralelo reduz'],c:0,exp:'Série: tensão se divide entre os capacitores (útil para suportar tensões maiores), Ceq < menor C. Paralelo: cargas somam-se, Ceq = ΣCᵢ.',type:'💭 CONCEITUAL'},
-  ()=>{const r_k=rnd([1,2,5,10,22,47,100]),cc=rnd([10,22,47,100,220,470,1000]);const tau=parseFloat((r_k*1000*cc*1e-6).toFixed(3));const t5=parseFloat((tau*5).toFixed(3));const{opts,c}=shuf([f(tau)+' s',f(parseFloat((tau*2).toFixed(3)))+' s',f(r_k+cc)+' s',f(parseFloat((tau/5).toFixed(4)))+' s'],0);return{q:`R=${r_k}kΩ, C=${cc}μF → τ = R·C = ? (tempo para carregar 63%)`,svg:null,opts,c,exp:`τ = ${r_k}×10³ × ${cc}×10⁻⁶ = <strong>${f(tau)} s</strong>. Carga completa em 5τ ≈ ${f(t5)} s`,type:'🔢 CÁLCULO'};},
-  {q:'Por que o capacitor de um flash de câmera fotográfica pode dar um choque mesmo com a câmera desligada?',svg:null,opts:['Capacitores retêm carga mesmo sem alimentação — energia persiste no campo elétrico','A câmera tem uma bateria oculta extra','O flash gera sua própria tensão ao girar','A carga é perdida em segundos — não há risco'],c:0,exp:'Capacitores armazenam carga elétrica no campo entre as placas, independente da bateria. Sem resistência de descarga, a carga pode persistir por horas ou dias.',type:'💭 CONCEITUAL'},
-  ()=>{const c1=rnd([10,22,47,100]),c2=rnd([22,47,100,220]),u=rnd([10,15,20,24,50]);const cp=c1+c2;const ep=parseFloat((.5*cp*1e-6*u*u*1000).toFixed(2));const e1=parseFloat((.5*c1*1e-6*u*u*1000).toFixed(2));const{opts,c}=shuf([f(ep)+' mJ',f(e1)+' mJ',f(parseFloat((ep*2).toFixed(2)))+' mJ',f(parseFloat((ep/2).toFixed(2)))+' mJ'],0);return{q:`C₁=${c1}μF e C₂=${c2}μF em <strong>paralelo</strong> com U=${u}V. Energia total?`,svg:null,opts,c,exp:`Ceq=${c1}+${c2}=${cp}μF → E = ½×${cp}×10⁻⁶×${u}² = <strong>${f(ep)} mJ</strong>`,type:'🔢 CÁLCULO'};},
-  {q:'A DRAM (memória RAM dinâmica) armazena cada bit usando um transistor e um capacitor. O nome "dinâmica" refere-se a:',svg:null,opts:['Necessidade de refresh contínuo: capacitores perdem carga e devem ser recarregados','A velocidade de acesso à memória','A tensão variável usada na leitura','O tamanho dinâmico dos dados armazenados'],c:0,exp:'DRAM precisa de ciclos de refresh (milhares de vezes por segundo) porque os capacitores têm corrente de fuga. SRAM usa flip-flops — sem refresh, mas ocupa mais área.',type:'💭 CONCEITUAL'},
+  // 1
+  ()=>{const cc=rnd([100,220,470,1000]),u=rnd([10,15,20,30,50]);const q=parseFloat((cc*u/1000).toFixed(2));
+    const{opts,c}=shuf([
+      `${f(q)} mC — Q = C·U`,
+      `${f(parseFloat((cc/u).toFixed(2)))} mC — dividiu ao invés de multiplicar`,
+      `${f(parseFloat((q*3).toFixed(2)))} mC — triplicou sem motivo`,
+      `${f(parseFloat((q/2).toFixed(2)))} mC — dividiu por 2 erroneamente`
+    ],0);
+    return{
+      q1:`📸 <strong>Flash de câmera fotográfica:</strong> O flash usa um capacitor para acumular energia rapidamente e liberar em milissegundos. O capacitor do flash tem <strong>C = ${cc} μF</strong>.`,
+      q2:`Para produzir uma boa foto, o capacitor é carregado até <strong>U = ${u} V</strong>. Qual a carga elétrica armazenada? (Q = C·U)`,
+      svg:null,opts,c,exp:`Q = C·U = ${cc}×10⁻⁶×${u} = <strong>${f(q)} mC</strong>. Carga disponível para o pulso de luz.`,type:'🔢 CÁLCULO'};},
+  // 2
+  ()=>{const cc=rnd([100,220,470,1000]),u=rnd([10,20,30,50,100]);const e=parseFloat((.5*cc*1e-6*u*u).toFixed(4));const emj=parseFloat((e*1000).toFixed(3));
+    const{opts,c}=shuf([
+      `${f(emj)} mJ — E = ½CU²`,
+      `${f(parseFloat((emj*2).toFixed(3)))} mJ — esqueceu o ½`,
+      `${f(parseFloat((emj/4).toFixed(3)))} mJ — dividiu U por 2 antes de elevar ao quadrado`,
+      `${f(parseFloat((cc*u/1000).toFixed(2)))} mJ — calculou Q, não E`
+    ],0);
+    return{
+      q1:`⚡ <strong>Desfibrilador automático (DEA):</strong> Desfibriladores são equipamentos que salvam vidas em paradas cardíacas. Eles armazenam energia num capacitor de <strong>C = ${cc} μF</strong>.`,
+      q2:`O capacitor é carregado até <strong>U = ${u} V</strong>. Qual a energia armazenada para o choque? (E = ½·C·U²)`,
+      svg:null,opts,c,exp:`E = ½×${cc}×10⁻⁶×${u}² = <strong>${f(emj)} mJ</strong>. Desfibriladores usam tipicamente 150–360 J.`,type:'🔢 CÁLCULO'};},
+  // 3
+  ()=>{const c1=rnd([10,22,47,100]),c2=rnd([22,47,100,220]),u=rnd([10,15,20,30,50]);const cp=c1+c2;
+    const{opts,c}=shuf([
+      `${cp} μF — Ceq = C₁+C₂ (paralelo soma diretamente)`,
+      `${parseFloat((c1*c2/(c1+c2)).toFixed(1))} μF — fórmula do série (usou a errada)`,
+      `${Math.max(c1,c2)} μF — pegou só o maior`,
+      `${parseFloat(((c1+c2)/2).toFixed(1))} μF — tirou a média`
+    ],0);
+    return{
+      q1:`🔊 <strong>Filtro de áudio:</strong> Caixas de som de qualidade usam capacitores em <strong>paralelo</strong> para criar filtros que separam graves e agudos. Dois capacitores são usados: C₁ = ${c1} μF e C₂ = ${c2} μF.`,
+      q2:`Ao colocar capacitores em paralelo com tensão <strong>U = ${u} V</strong>, as capacitâncias <strong>somam</strong>. Qual a capacitância equivalente total?`,
+      svg:null,opts,c,exp:`Paralelo: Ceq = C₁+C₂ = ${c1}+${c2} = <strong>${cp} μF</strong>. Paralelo de capacitores soma — oposto dos resistores!`,type:'🔢 CÁLCULO'};},
+  // 4
+  ()=>{const c1=rnd([10,22,47,100]),c2=rnd([22,47,100,220]);const cs=parseFloat((c1*c2/(c1+c2)).toFixed(1));
+    const{opts,c}=shuf([
+      `${f(cs)} μF — 1/Ceq = 1/C₁+1/C₂ (menor que menor C)`,
+      `${c1+c2} μF — fórmula do paralelo (usou a errada)`,
+      `${Math.min(c1,c2)} μF — pegou o menor capacitor`,
+      `${parseFloat((cs*2).toFixed(1))} μF — dobrou o resultado`
+    ],0);
+    return{
+      q1:`⚡ <strong>Fonte de alta tensão:</strong> Para suportar tensões maiores sem quebrar, capacitores são ligados em <strong>série</strong>. Dois capacitores C₁ = ${c1} μF e C₂ = ${c2} μF são usados assim.`,
+      q2:`Em série, a capacitância equivalente é calculada como 1/Ceq = 1/C₁+1/C₂. Qual o valor de Ceq? (Dica: deve ser <strong>menor</strong> que o menor capacitor)`,
+      svg:null,opts,c,exp:`Série: 1/Ceq = 1/${c1}+1/${c2} → Ceq = (${c1}×${c2})/(${c1}+${c2}) ≈ <strong>${f(cs)} μF</strong>. Menor que ${Math.min(c1,c2)} μF!`,type:'🔢 CÁLCULO'};},
+  // 5
+  ()=>{const r_k=rnd([1,2,5,10,22,47]),cc=rnd([10,22,47,100,220,470]);const tau=parseFloat((r_k*1000*cc*1e-6).toFixed(3));const t5=parseFloat((tau*5).toFixed(3));
+    const{opts,c}=shuf([
+      `${f(tau)} s — τ = R·C`,
+      `${f(parseFloat((tau*2).toFixed(3)))} s — dobrou sem razão`,
+      `${f(r_k+cc)} s — somou ao invés de multiplicar`,
+      `${f(parseFloat((tau/5).toFixed(4)))} s — dividiu por 5 (confundiu com carga completa)`
+    ],0);
+    return{
+      q1:`⏱️ <strong>Temporizador de portão:</strong> Um portão automático usa circuito RC para temporizar o fechamento após a passagem. O resistor R = ${r_k} kΩ e o capacitor C = ${cc} μF.`,
+      q2:`A constante de tempo τ = R·C define a velocidade do temporizador — após 5τ o capacitor está 99% carregado. Qual o valor de τ?`,
+      svg:null,opts,c,exp:`τ = R·C = ${r_k}×10³×${cc}×10⁻⁶ = <strong>${f(tau)} s</strong>. Carga completa em 5τ ≈ ${f(t5)} s.`,type:'🔢 CÁLCULO'};},
+  // 6
+  {
+    q1:`💻 <strong>Memória RAM dinâmica (DRAM):</strong> A memória RAM do computador usa capacitores para armazenar bits — 1 = capacitor carregado, 0 = descarregado. Cada capacitor tem corrente de fuga e perde carga em microssegundos.`,
+    q2:`Por causa dessa perda, a RAM precisa de um processo chamado "refresh" (recarga periódica). Se o refresh parar, o que acontece com os dados armazenados?`,
+    svg:null,
+    opts:['Os dados são perdidos — capacitores descarregam e os bits viram 0','Os dados são preservados — a carga se mantém sem refresh','A RAM converte automaticamente para memória flash','O processador para para proteger os dados'],
+    c:0,exp:'DRAM precisa de refresh milhares de vezes por segundo. Sem alimentação ou refresh, os capacitores descarregam e todos os dados somem. Por isso RAM é memória volátil.',type:'💭 CONCEITUAL'},
+  // 7
+  ()=>{const cc=rnd([100,220,470,1000]),u1=rnd([10,20,30,50]),u2=u1*2;const e1=parseFloat((.5*cc*1e-6*u1*u1*1000).toFixed(2));const e2=parseFloat((.5*cc*1e-6*u2*u2*1000).toFixed(2));
+    const{opts,c}=shuf([
+      `${f(e2)} mJ — tensão dobrou → energia quadruplicou (E∝U²)`,
+      `${f(e1*2)} mJ — dobrou a tensão, dobrou a energia (esqueceu o U²)`,
+      `${f(e1)} mJ — energia não mudou`,
+      `${f(e2*2)} mJ — multiplicou por 8 (confundiu quadrático com cúbico)`
+    ],0);
+    return{
+      q1:`🏥 <strong>Intensidade do flash de desfibrilador:</strong> O médico pode ajustar a tensão do desfibrilador para controlar a intensidade do choque. A ${u1} V, o capacitor de C = ${cc} μF armazena E₁ = ${f(e1)} mJ.`,
+      q2:`O médico aumenta a tensão para <strong>${u2} V</strong> (o dobro). Qual a nova energia armazenada? Use E = ½·C·U².`,
+      svg:null,opts,c,exp:`E = ½CU². Tensão dobrou → E = ½C(2U)² = 4·(½CU²) = 4×${f(e1)} = <strong>${f(e2)} mJ</strong>. Energia cresce com U²!`,type:'🔢 ANÁLISE'};},
+  // 8
+  {
+    q1:`🔋 <strong>Carregador rápido de smartphone:</strong> Carregadores modernos usam circuitos com capacitores que se carregam rapidamente (τ pequeno) e descarregam lentamente para estabilizar a tensão na bateria.`,
+    q2:`Um capacitor de 1000 μF está carregado a 100 V (E₁). A tensão cai para 50 V (E₂ = ½·C·(50)²). Em quantas vezes a energia armazenada diminuiu?`,
+    svg:null,
+    opts:['4 vezes — E∝U², tensão caiu à metade → E cai para ¼','2 vezes — tensão caiu à metade, energia caiu à metade','8 vezes — confundiu com relação cúbica','Permanece igual — energia não depende de tensão'],
+    c:0,exp:'E = ½CU². U caiu à metade → E = ½C(U/2)² = ¼·(½CU²). Energia cai para ¼ do valor original!',type:'💭 ANÁLISE'},
+  // 9
+  ()=>{const c1=rnd([22,47,100,220]),c2=rnd([22,47,100,220]),c3=rnd([22,47,100]);const ceq=c1+c2+c3;
+    const{opts,c}=shuf([
+      `${ceq} μF — paralelo: Ceq = C₁+C₂+C₃`,
+      `${parseFloat((1/(1/c1+1/c2+1/c3)).toFixed(1))} μF — fórmula do série`,
+      `${Math.max(c1,c2,c3)} μF — pegou só o maior`,
+      `${parseFloat(((c1+c2+c3)/3).toFixed(0))} μF — tirou a média`
+    ],0);
+    return{
+      q1:`📻 <strong>Filtro de rádio AM:</strong> Receptores de rádio usam bancos de capacitores em <strong>paralelo</strong> para sintonizar frequências. Três capacitores em paralelo: C₁ = ${c1} μF, C₂ = ${c2} μF e C₃ = ${c3} μF.`,
+      q2:`Para calcular a frequência de ressonância do filtro, precisa-se de Ceq. Qual a capacitância equivalente com os três capacitores em paralelo?`,
+      svg:null,opts,c,exp:`Paralelo: Ceq = C₁+C₂+C₃ = ${c1}+${c2}+${c3} = <strong>${ceq} μF</strong>`,type:'🔢 CÁLCULO'};},
+  // 10
+  {
+    q1:`⚡ <strong>Perigo invisível — flash de câmera:</strong> Fotógrafos experientes sabem que o capacitor de um flash pode dar um choque grave mesmo com a câmera DESLIGADA. Isso porque capacitores armazenam carga elétrica no campo elétrico entre as placas.`,
+    q2:`Qual a razão física para o capacitor permanecer carregado (e perigoso) mesmo sem a bateria conectada?`,
+    svg:null,
+    opts:['A carga fica armazenada no campo elétrico entre as placas — não precisa de circuito fechado','A bateria continua fornecendo energia mesmo desligada','O capacitor se recarrega usando a luz ambiente','Resistência zero do capacitor mantém a carga indefinidamente'],
+    c:0,exp:'Capacitores armazenam energia no campo elétrico entre as placas. Sem resistência de descarga, a carga pode persistir por horas ou dias. Sempre descarregue antes de manusear.',type:'💭 CONCEITUAL'},
+  // 11
+  ()=>{const c1=rnd([10,22,47,100]),c2=rnd([22,47,100,220]);const cs=parseFloat((c1*c2/(c1+c2)).toFixed(1));const cp=c1+c2;
+    const{opts,c}=shuf([
+      `Série: ${f(cs)} μF — tensão dividida entre capacitores`,
+      `Série: ${cp} μF — usou fórmula do paralelo`,
+      `Paralelo: ${f(cs)} μF — usou fórmula do série`,
+      `Iguais: ambos ${c1} μF — ignorou C₂`
+    ],0);
+    return{
+      q1:`🔌 <strong>Proteção de alta tensão:</strong> Para que capacitores suportem tensões maiores sem quebrar, são ligados em <strong>série</strong>. Dois capacitores: C₁ = ${c1} μF e C₂ = ${c2} μF.`,
+      q2:`Na configuração série, a tensão se divide entre eles — e a Ceq é menor que qualquer C individual. Qual a Ceq em série? (Compare com Ceq = ${cp} μF em paralelo)`,
+      svg:null,opts,c,exp:`Série: Ceq = (${c1}×${c2})/(${c1}+${c2}) ≈ <strong>${f(cs)} μF</strong>. Muito menor que paralelo (${cp} μF)!`,type:'🔢 CÁLCULO'};},
 ],
+// ── INDUTORES ────────────────────────────────────────────────────
 ind:[
-  ()=>{const l=rnd([10,20,50,100,200,500]),i=rnd([1,2,3,4,5,6,8,10]);const e=parseFloat((.5*l/1000*i*i*1000).toFixed(2));const{opts,c}=shuf([f(e)+' mJ',f(l*i/1000)+' J',parseFloat((e*2).toFixed(2))+' mJ',parseFloat((e/4).toFixed(2))+' mJ'],0);return{q:`Indutor de <strong>${l}mH</strong> com corrente de <strong>${i}A</strong>. Energia armazenada? <em style="color:var(--txt2);font-size:.85rem">(E=½LI²)</em>`,svg:null,opts,c,exp:`E=½LI²=½×${l}×10⁻³×${i}²=<strong>${f(e)} mJ</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const l=rnd([10,50,100,200,500]),fb=rnd([50,60,100,120,400,1000]);const xl=parseFloat((2*Math.PI*fb*l/1000).toFixed(1));const{opts,c}=shuf([f(xl)+' Ω',parseFloat((xl/2).toFixed(1))+' Ω',parseFloat((xl*2).toFixed(1))+' Ω',parseFloat((l/fb).toFixed(3))+' Ω'],0);return{q:`Indutor de <strong>${l}mH</strong> em CA de <strong>${fb}Hz</strong>. Reatância XL=2πfL=?`,svg:null,opts,c,exp:`XL=2π×${fb}×${l}×10⁻³≈<strong>${f(xl)} Ω</strong>. Maior frequência→ maior XL→ maior bloqueio.`,type:'🔢 CÁLCULO'};},
-  {q:'Indutor em corrente contínua (CC) estabilizada age como:',svg:null,opts:['Fio condutor (XL=0, sem oposição)','Circuito aberto','Resistor de alto valor','Capacitor carregado'],c:0,exp:'Em CC: f=0→ XL=2πfL=0. Indutor oferece oposição zero em CC permanente — age como fio.',type:'💭 CONCEITUAL'},
-  {q:'A reatância indutiva XL aumenta quando:',svg:null,opts:['A frequência aumenta (XL=2πfL)','A corrente aumenta','A tensão diminui','A temperatura cai'],c:0,exp:'XL=2πfL — proporcional à frequência. Por isso indutores bloqueiam CA de alta frequência (filtro passa-baixa).',type:'💭 CONCEITUAL'},
-  ()=>{const l=rnd([50,100,200]),i1=rnd([2,3,4]),i2=i1*2;const e1=parseFloat((.5*l/1000*i1*i1*1000).toFixed(1)),e2=parseFloat((.5*l/1000*i2*i2*1000).toFixed(1));const{opts,c}=shuf([f(e2)+' mJ',f(e1*2)+' mJ',f(e2*2)+' mJ',f(e1)+' mJ'],0);return{q:`Indutor ${l}mH: E=${f(e1)}mJ com ${i1}A. Corrente dobra para ${i2}A. Nova energia?`,svg:null,opts,c,exp:`E=½LI². Corrente dobrou → E fica 4× maior = <strong>${f(e2)} mJ</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const l=rnd([10,50,100]),f1=rnd([50,60,100]),f2b=f1*2;const xl1=parseFloat((2*Math.PI*f1*l/1000).toFixed(1)),xl2=parseFloat((2*Math.PI*f2b*l/1000).toFixed(1));const{opts,c}=shuf([f(xl2)+' Ω',f(xl1)+' Ω',f(xl2*2)+' Ω',f(xl1/2)+' Ω'],0);return{q:`L=${l}mH: XL=${f(xl1)}Ω a ${f1}Hz. Qual XL a ${f2b}Hz (frequência dobrada)?`,svg:null,opts,c,exp:`XL=2πfL — proporcional à f. Frequência dobrou → XL dobra: <strong>${f(xl2)} Ω</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const l=rnd([50,100,200]),r=rnd([5,10,20,50]);const tau=parseFloat((l/r).toFixed(1));const{opts,c}=shuf([f(tau)+' ms',parseFloat((tau*2).toFixed(1))+' ms',parseFloat((tau/2).toFixed(1))+' ms',f(l*r)+' ms'],0);return{q:`Circuito RL: L=${l}mH, R=${fR(r)}. Constante de tempo τ=L/R=?`,svg:null,opts,c,exp:`τ=L/R=${l}×10⁻³/${r}=<strong>${f(tau)} ms</strong>. Tempo para corrente atingir 63% do valor final.`,type:'🔢 CÁLCULO'};},
-  {q:'Transformadores elétricos funcionam com base em:',svg:null,opts:['Indução mútua entre duas bobinas','Efeito Joule nas espiras','Capacitância das espiras','Resistividade do núcleo de ferro'],c:0,exp:'Transformador: variação de corrente na bobina primária gera campo magnético variável→ induz tensão na secundária (Lei de Faraday/Henry).',type:'💭 CONCEITUAL'},
-  {q:'Indutores são usados como filtros passa-baixa porque:',svg:null,opts:['Bloqueiam CA de alta frequência (XL=2πfL↑) e deixam CC passar','Bloqueiam CC e deixam CA passar','Armazenam carga elétrica','Têm resistência constante'],c:0,exp:'XL=2πfL. f alta→ XL alto→ bloqueio. f=0 (CC)→ XL=0→ passa livremente. Usados em filtros de fontes chaveadas.',type:'💭 CONCEITUAL'},
-  {q:'A auto-indução (Lei de Henry) diz que um indutor:',svg:null,opts:['Resiste a qualquer variação de corrente (gera FEM contrária)','Amplifica variações de corrente','Converte energia elétrica em calor','Armazena carga como um capacitor'],c:0,exp:'ε=−L·dI/dt. O sinal negativo (Lei de Lenz) indica que a FEM induzida se opõe à variação que a gerou.',type:'💭 CONCEITUAL'},
-
-  // Extra questions IND
-  ()=>{const l=rnd([1,5,10,20,50,100,200,500]),i=rnd([0.5,1,2,3,5,8,10]);const e=parseFloat((.5*l/1000*i*i*1000).toFixed(2));const{opts,c}=shuf([f(e)+' mJ',f(l*i/1000)+' J',parseFloat((e*4).toFixed(2))+' mJ',parseFloat((e/2).toFixed(2))+' mJ'],0);return{q:`Bobina de <strong>${l}mH</strong> com corrente de <strong>${f(i)}A</strong>. Energia E=½LI²?`,svg:null,opts,c,exp:`E=½×${l}×10⁻³×${f(i)}²=<strong>${f(e)}mJ</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const l=rnd([1,5,10,20,50,100,200]),f2=rnd([50,60,100,200,500,1000,5000]);const xl=parseFloat((2*Math.PI*f2*l/1000).toFixed(2));const{opts,c}=shuf([f(xl)+' Ω',parseFloat((xl*3).toFixed(2))+' Ω',parseFloat((xl/3).toFixed(2))+' Ω',parseFloat((l*f2/1000).toFixed(3))+' Ω'],0);return{q:`Indutor de <strong>${l}mH</strong> em CA de <strong>${f2}Hz</strong>. Reatância XL=2πfL?`,svg:null,opts,c,exp:`XL=2π×${f2}×${l}×10⁻³≈<strong>${f(xl)}Ω</strong>`,type:'🔢 CÁLCULO'};},
-  {q:'A bobina de ignição de um carro eleva a tensão de 12V para ~30.000V para a centelha. Isso é possível porque:',svg:null,opts:['ε=−L·dI/dt: variação rápida de corrente induz alta tensão','O cobre da bobina armazena muita carga','A bateria gera pulsos de alta tensão','A resistência da vela é muito alta'],c:0,exp:'ε=−L·dI/dt. A bobina de ignição tem alta L. Ao interromper a corrente bruscamente, dI/dt é enorme→ε muito alta. Transforma 12V em até 30.000V.',type:'💭 CONCEITUAL'},
-  ()=>{const l=rnd([10,50,100,200,500]),r=rnd([2,5,10,20,50]);const tau=parseFloat((l/r).toFixed(1));const i_final=rnd([1,2,3,5,10]);const{opts,c}=shuf([f(tau)+' ms',parseFloat((tau*2).toFixed(1))+' ms',parseFloat((tau/2).toFixed(1))+' ms',f(l*r)+' ms'],0);return{q:`Motor RL: L=${l}mH, R=${fR(r)}. Constante de tempo τ=L/R=?`,svg:null,opts,c,exp:`τ=L/R=${l}×10⁻³/${r}=<strong>${f(tau)}ms</strong>. Corrente atinge 63% do final em ${f(tau)}ms.`,type:'🔢 CÁLCULO'};},
-  ()=>{const l=rnd([10,50,100,500]),i1=rnd([1,2,4]),i2=i1*3;const e1=parseFloat((.5*l/1000*i1*i1*1000).toFixed(1)),e2=parseFloat((.5*l/1000*i2*i2*1000).toFixed(1));const{opts,c}=shuf([f(e2)+' mJ',f(e1*3)+' mJ',f(e2*2)+' mJ',f(e1)+' mJ'],0);return{q:`Indutor ${l}mH: E=${f(e1)}mJ com ${i1}A. Corrente triplica para ${i2}A. Nova energia?`,svg:null,opts,c,exp:`E=½LI². Corrente triplicou→E fica 9× maior=${9}×${f(e1)}=<strong>${f(e2)}mJ</strong>`,type:'🔢 CÁLCULO'};},
-  {q:'Qual a vantagem de usar indutores (bobinas) em filtros de fontes chaveadas de computadores?',svg:null,opts:['Bloqueiam variações rápidas de corrente (ruídos de alta frequência)','Armazenam carga como capacitores','Aumentam a tensão de saída','Reduzem a resistência DC do circuito'],c:0,exp:'XL=2πfL aumenta com f. Ruídos de alta frequência→XL alto→bloqueados. Corrente DC (f≈0)→XL≈0→passa livremente.',type:'💭 CONCEITUAL'},
-  {q:'Dois indutores de 10mH em série têm indutância equivalente de:',svg:null,opts:['20mH','5mH','100mH','10mH'],c:0,exp:'Indutores em série: Leq=L₁+L₂+...=10+10=20mH. Comportamento igual aos resistores em série.',type:'💭 CONCEITUAL'},
-  ()=>{const xl=rnd([10,20,50,100,200]),f2=rnd([50,60,100]);const l=parseFloat((xl/(2*Math.PI*f2)*1000).toFixed(1));const{opts,c}=shuf([f(l)+' mH',parseFloat((l*2).toFixed(1))+' mH',parseFloat((l/2).toFixed(1))+' mH',f(xl*f2)+' mH'],0);return{q:`XL=${xl}Ω a ${f2}Hz. Qual indutância L? (XL=2πfL)`,svg:null,opts,c,exp:`L=XL/(2πf)=${xl}/(2π×${f2})≈<strong>${f(l)}mH</strong>`,type:'🔢 CÁLCULO'};},
-
-  // ── IND EXTRA BATCH 2 ──────────────────────────────────────────
-  {q:'Joseph Henry descobriu a auto-indução em 1832. Sua principal contribuição prática foi:',svg:null,opts:['O relé elétrico — base do telégrafo e da telefonia','O capacitor de placas paralelas','O motor de corrente alternada','A pilha voltaica'],c:0,exp:'Henry construiu relés elétricos de alta potência. O relé usa uma bobina para acionar contatos mecanicamente — base do telégrafo de Morse e depois da telefonia.',type:'💭 HISTÓRICO'},
-  ()=>{const l=rnd([1,5,10,20,50,100,200,500,1000]),f2=rnd([50,60,100,200,500,1000,5000,10000]);const xl=parseFloat((2*Math.PI*f2*l/1000).toFixed(2));const{opts,c}=shuf([f(xl)+' Ω',f(parseFloat((xl*2).toFixed(2)))+' Ω',f(parseFloat((xl/3).toFixed(2)))+' Ω',f(l*f2/1000)+' Ω'],0);return{q:`L=<strong>${l}mH</strong>, f=<strong>${f2}Hz</strong> → XL = 2π·f·L = ?`,svg:null,opts,c,exp:`XL = 2π × ${f2} × ${l}×10⁻³ ≈ <strong>${f(xl)} Ω</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const l=rnd([10,50,100,200,500,1000]),i=rnd([0.5,1,2,3,5,8,10]);const e=parseFloat((.5*l/1000*i*i).toFixed(4));const e_mj=parseFloat((e*1000).toFixed(2));const{opts,c}=shuf([f(e_mj)+' mJ',f(parseFloat((e_mj*4).toFixed(2)))+' mJ',f(l*i)+' mJ',f(parseFloat((e_mj/4).toFixed(2)))+' mJ'],0);return{q:`L=<strong>${l}mH</strong>, I=<strong>${i}A</strong> → E = ½·L·I² = ?`,svg:null,opts,c,exp:`E = ½×${l}×10⁻³×${i}² = <strong>${f(e_mj)} mJ</strong>`,type:'🔢 CÁLCULO'};},
-  {q:'Um indutor em CA de alta frequência (ex: rádio FM, 100 MHz) se comporta como:',svg:null,opts:['Praticamente circuito aberto (XL = 2πfL → muito alto)','Fio condutor (resistência zero)','Capacitor (armazena carga)','Resistor fixo de 50Ω'],c:0,exp:'XL = 2πfL. Em 100 MHz com L=1μH: XL = 2π×10⁸×10⁻⁶ ≈ 628Ω. Alta frequência → XL altíssimo → bloqueia o sinal → quase circuito aberto.',type:'💭 CONCEITUAL'},
-  ()=>{const l=rnd([10,50,100,200,500]),r=rnd([1,2,5,10,20,50,100]);const tau=parseFloat((l/r).toFixed(1));const{opts,c}=shuf([f(tau)+' ms',f(parseFloat((tau*3).toFixed(1)))+' ms',f(l+r)+' ms',f(parseFloat((tau/3).toFixed(1)))+' ms'],0);return{q:`L=${l}mH, R=${fR(r)} → τ = L/R = ? (tempo para I atingir 63% do valor final)`,svg:null,opts,c,exp:`τ = L/R = ${l}×10⁻³/${r} = <strong>${f(tau)} ms</strong>`,type:'🔢 CÁLCULO'};},
-  {q:'Transformadores de distribuição de energia elétrica elevam a tensão para centenas de kV na transmissão. O objetivo é:',svg:null,opts:['Reduzir a corrente → reduzir perdas P=R·I² nos fios de transmissão','Aumentar a potência disponível','Reduzir a frequência da CA para 50/60Hz','Converter CC em CA'],c:0,exp:'P = constante. Tensão 10× maior → corrente 10× menor → perdas nos fios 100× menores (P=R·I²). Por isso transmite-se em alta tensão e distribui em baixa.',type:'💭 CONCEITUAL'},
-  ()=>{const xl=rnd([10,20,50,100,200,500]),f3=rnd([50,60,100,200]);const l=parseFloat((xl/(2*Math.PI*f3)*1000).toFixed(1));const{opts,c}=shuf([f(l)+' mH',f(parseFloat((l*2).toFixed(1)))+' mH',f(parseFloat((l/2).toFixed(1)))+' mH',f(xl*f3)+' mH'],0);return{q:`XL=${xl}Ω a ${f3}Hz. Indutância L = XL/(2π·f) = ?`,svg:null,opts,c,exp:`L = ${xl}/(2π×${f3}) = <strong>${f(l)} mH</strong>`,type:'🔢 CÁLCULO'};},
-  {q:'A "faísca" ao desligar um aparelho com motor (geladeira, ar-condicionado) é causada por:',svg:null,opts:['Auto-indução: ε = −L·dI/dt — a bobina gera pico de alta tensão ao ser desligada','Capacitância do motor criando descarga','Corrente de partida muito alta','Aterramento deficiente'],c:0,exp:'Ao desligar, dI/dt é enorme → ε = −L·dI/dt → pico de centenas de volts. Por isso usam-se diodos de roda livre (flyback diodes) para proteger o circuito.',type:'💭 CONCEITUAL'},
+  // 1
+  ()=>{const l=rnd([50,100,200,500]),fb=rnd([50,60,100,200]);const xl=parseFloat((2*Math.PI*fb*l/1000).toFixed(1));
+    const{opts,c}=shuf([
+      `${f(xl)} Ω — XL = 2πfL`,
+      `${f(parseFloat((xl/2).toFixed(1)))} Ω — dividiu por 2 (esqueceu o 2π)`,
+      `${f(parseFloat((xl*2).toFixed(1)))} Ω — dobrou incorretamente`,
+      `${f(parseFloat((l/fb).toFixed(3)))} Ω — dividiu L por f (fórmula errada)`
+    ],0);
+    return{
+      q1:`🔊 <strong>Filtro de crossover de caixa de som:</strong> Caixas de som de qualidade usam bobinas (indutores) para separar graves dos agudos. Uma bobina de <strong>L = ${l} mH</strong> é usada no filtro.`,
+      q2:`Para graves em <strong>f = ${fb} Hz</strong>, qual a reatância indutiva? (XL = 2π·f·L) — Quanto maior XL, mais a bobina bloqueia esse som.`,
+      svg:null,opts,c,exp:`XL = 2π×${fb}×${l}×10⁻³ ≈ <strong>${f(xl)} Ω</strong>. Agudos têm f maior → XL maior → mais bloqueados.`,type:'🔢 CÁLCULO'};},
+  // 2
+  ()=>{const l=rnd([50,100,200,500,1000]),i=rnd([1,2,3,4,5,8,10]);const e=parseFloat((.5*l/1000*i*i).toFixed(3));const emj=parseFloat((e*1000).toFixed(2));
+    const{opts,c}=shuf([
+      `${f(emj)} mJ — E = ½·L·I²`,
+      `${f(parseFloat((emj*2).toFixed(2)))} mJ — esqueceu o ½`,
+      `${f(l*i/1000)} J — calculou L·I sem o ½ e sem quadrado`,
+      `${f(parseFloat((emj/4).toFixed(2)))} mJ — dividiu I por 2 antes de elevar ao quadrado`
+    ],0);
+    return{
+      q1:`⚙️ <strong>Motor de veículo elétrico:</strong> A bobina de campo de um motor elétrico armazena energia magnética enquanto há corrente. A bobina tem indutância <strong>L = ${l} mH</strong>.`,
+      q2:`Com corrente de <strong>I = ${i} A</strong> circulando, qual a energia armazenada no campo magnético? (E = ½·L·I²)`,
+      svg:null,opts,c,exp:`E = ½×${l}×10⁻³×${i}² = <strong>${f(emj)} mJ</strong>. Essa energia é liberada ao frear — base dos freios regenerativos!`,type:'🔢 CÁLCULO'};},
+  // 3
+  {
+    q1:`🔌 <strong>Indutor em corrente contínua (CC) estabilizada:</strong> Um técnico insere uma bobina de 100 mH em série num circuito CC de 12 V. Após alguns milissegundos, a corrente se estabiliza completamente.`,
+    q2:`Com a corrente estabilizada (sem variação: dI/dt = 0), qual o comportamento elétrico da bobina? Lembre: ε = −L·dI/dt.`,
+    svg:null,
+    opts:['Age como fio condutor (XL = 0, sem oposição alguma)','Age como resistor de alto valor','Age como circuito aberto (bloqueia CC permanentemente)','Aquece como um resistor (Efeito Joule intenso)'],
+    c:0,exp:'CC estável: dI/dt = 0 → ε = −L·0 = 0 → XL = 2πfL com f=0 → XL=0. Indutor vira fio condutor. Só se opõe a VARIAÇÕES de corrente.',type:'💭 CONCEITUAL'},
+  // 4
+  ()=>{const l=rnd([50,100,200]),f1=rnd([50,60,100]),mult=rnd([2,3,4]);const f2=f1*mult;const xl1=parseFloat((2*Math.PI*f1*l/1000).toFixed(1));const xl2=parseFloat((2*Math.PI*f2*l/1000).toFixed(1));
+    const{opts,c}=shuf([
+      `${f(xl2)} Ω — XL ×${mult} (proporcional à frequência)`,
+      `${f(xl1)} Ω — não mudou (ignorou a relação XL∝f)`,
+      `${f(xl2*mult)} Ω — elevou ao quadrado incorretamente`,
+      `${f(xl1/mult)} Ω — dividiu (inverteu a relação)`
+    ],0);
+    return{
+      q1:`📻 <strong>Filtro passa-baixa em rádio AM:</strong> Um indutor de <strong>L = ${l} mH</strong> é usado como filtro. Na frequência de ${f1} Hz, a reatância é XL = ${f(xl1)} Ω.`,
+      q2:`A frequência é multiplicada por <strong>${mult}× (para ${f2} Hz)</strong>. Como XL = 2π·f·L é proporcional a f, qual a nova reatância?`,
+      svg:null,opts,c,exp:`XL ∝ f. Frequência ×${mult} → XL ×${mult} = ${f(xl1)}×${mult} = <strong>${f(xl2)} Ω</strong>. Agudos encontram muito mais oposição!`,type:'🔢 ANÁLISE'};},
+  // 5
+  ()=>{const l=rnd([10,50,100,200,500]),r=rnd([5,10,20,50]);const tau=parseFloat((l/r).toFixed(1));
+    const{opts,c}=shuf([
+      `${f(tau)} ms — τ = L/R`,
+      `${f(parseFloat((tau*2).toFixed(1)))} ms — dobrou sem razão`,
+      `${f(l*r)} ms — multiplicou ao invés de dividir`,
+      `${f(parseFloat((tau/2).toFixed(1)))} ms — dividiu por 2 erroneamente`
+    ],0);
+    return{
+      q1:`🚗 <strong>Bobina de ignição automotiva:</strong> A bobina de ignição de um carro é um indutor em série com a resistência da vela. L = ${l} mH e R = ${fR(r)}.`,
+      q2:`A constante de tempo τ = L/R determina a velocidade com que a corrente cresce ou cai na bobina. Qual o valor de τ? (Em ms — 1 ms = 0,001 s)`,
+      svg:null,opts,c,exp:`τ = L/R = ${l}×10⁻³/${r} = <strong>${f(tau)} ms</strong>. Corrente atinge 63% do máximo em ${f(tau)} ms.`,type:'🔢 CÁLCULO'};},
+  // 6
+  {
+    q1:`⚡ <strong>Faísca ao desligar aparelhos com motor:</strong> Ao desligar uma geladeira ou ar-condicionado, às vezes aparece uma faísca no interruptor. Isso ocorre porque o motor tem indutância L e a corrente foi interrompida abruptamente.`,
+    q2:`Com base na Lei de Henry (ε = −L·dI/dt), qual é a causa física da faísca e do pico de tensão ao desligar o motor?`,
+    svg:null,
+    opts:['dI/dt é enorme ao interromper → ε = −L·dI/dt gera pico de centenas de volts','A bateria libera toda sua carga de uma vez ao ser desligada','O capacitor do motor se descarrega criando a faísca','A resistência do motor zera e a corrente dispara'],
+    c:0,exp:'ε = −L·dI/dt. Ao desligar: dI/dt enorme → ε altíssimo → faísca. Por isso usam-se diodos flyback para absorver esse pico e proteger o circuito.',type:'💭 ANÁLISE'},
+  // 7
+  ()=>{const l=rnd([100,200,500,1000]),i1=rnd([2,3,4]),i2=i1*2;const e1=parseFloat((.5*l/1000*i1*i1*1000).toFixed(1));const e2=parseFloat((.5*l/1000*i2*i2*1000).toFixed(1));
+    const{opts,c}=shuf([
+      `${f(e2)} mJ — corrente dobrou → energia ×4 (E = ½LI²)`,
+      `${f(e1*2)} mJ — dobrou a corrente, dobrou a energia (erro clássico)`,
+      `${f(e2*2)} mJ — multiplicou por 8`,
+      `${f(e1)} mJ — energia não mudou`
+    ],0);
+    return{
+      q1:`🔋 <strong>Freio regenerativo de veículo elétrico:</strong> Ao frear, o motor elétrico vira gerador e a energia cinética retorna para a bateria via indutor de L = ${l} mH. Com velocidade normal, a corrente na bobina é <strong>I = ${i1} A</strong> e a energia é ${f(e1)} mJ.`,
+      q2:`Em frenagem brusca, a corrente dobra para <strong>${i2} A</strong>. Qual a nova energia armazenada no indutor? (E = ½·L·I²)`,
+      svg:null,opts,c,exp:`E = ½LI². Corrente dobrou → E = ½L(2I)² = 4·(½LI²) = 4×${f(e1)} = <strong>${f(e2)} mJ</strong>. Energia ×4!`,type:'🔢 ANÁLISE'};},
+  // 8
+  {
+    q1:`🌐 <strong>Transmissão de energia elétrica:</strong> As linhas de transmissão de alta tensão usam transformadores (baseados em indutância mútua) para elevar a tensão de 13,8 kV para até 500 kV antes da transmissão.`,
+    q2:`O objetivo de transmitir em altíssima tensão (e baixíssima corrente) é reduzir as perdas nas linhas. Qual fórmula explica esse objetivo?`,
+    svg:null,
+    opts:['P_perda = R·I² — corrente menor → perdas muito menores (I²) nas linhas de transmissão','P_perda = U²/R — tensão maior → perdas maiores','P_perda = U·I — tensão maior → perdas maiores proporcionalmente','As perdas independem de I ou U — só dependem da resistência do fio'],
+    c:0,exp:'P_perda = R·I². Tensão 10× maior → corrente 10× menor → perdas 100× menores! Por isso transmite-se em alta tensão. Transformadores tornam isso possível.',type:'💭 ANÁLISE'},
+  // 9
+  ()=>{const xl=rnd([10,20,50,100,200]),f2=rnd([50,60,100]);const l=parseFloat((xl/(2*Math.PI*f2)*1000).toFixed(1));
+    const{opts,c}=shuf([
+      `${f(l)} mH — L = XL/(2π·f)`,
+      `${f(parseFloat((l*2).toFixed(1)))} mH — dobrou o resultado`,
+      `${f(parseFloat((l/2).toFixed(1)))} mH — dividiu por 2 a mais`,
+      `${f(xl*f2)} mH — multiplicou (fórmula invertida)`
+    ],0);
+    return{
+      q1:`🔧 <strong>Reparo de crossover de caixa de som:</strong> Um técnico de áudio precisa substituir a bobina de um filtro. O catálogo informa que a reatância necessária é <strong>XL = ${xl} Ω</strong>.`,
+      q2:`A frequência de corte do filtro é <strong>f = ${f2} Hz</strong>. Qual a indutância L necessária para essa reatância? (Isole L em XL = 2π·f·L)`,
+      svg:null,opts,c,exp:`L = XL/(2πf) = ${xl}/(2π×${f2}) ≈ <strong>${f(l)} mH</strong>`,type:'🔢 CÁLCULO'};},
+  // 10
+  {
+    q1:`💻 <strong>Fonte chaveada de computador:</strong> Fontes de computadores usam indutores (bobinas) nos circuitos de saída para suavizar a corrente e eliminar ruídos de alta frequência (> 100 kHz).`,
+    q2:`Um ruído de 100 kHz (100.000 Hz) precisa ser bloqueado. Por que um indutor é eficaz nessa função? Use XL = 2π·f·L e pense no que acontece com XL em alta frequência.`,
+    svg:null,
+    opts:['XL = 2πfL cresce muito em alta frequência → indutor bloqueia ruídos de alta f','XL diminui em alta frequência → corrente de ruído passa facilmente','Indutor armazena a energia do ruído como capacitor','O indutor converte o ruído em calor (Efeito Joule)'],
+    c:0,exp:'XL = 2πfL. f = 100 kHz com L = 10 μH: XL = 2π×10⁵×10⁻⁵ ≈ 6,3 Ω — suficiente para bloquear o ruído. XL cresce com f: filtro passa-baixa natural.',type:'💭 ANÁLISE'},
 ],
+// ── CIRCUITOS ────────────────────────────────────────────────────
 circ:[
-  ()=>{const r1=rnd([4,5,6,8]),r2=rnd([4,5,6,8]),r3=rnd([4,5,6,8]),u=rnd([24,36,48,60]);const req=r1+r2+r3,i=parseFloat((u/req).toFixed(2));const{opts,c}=shuf([f(i)+' A',parseFloat((u/r1).toFixed(2))+' A',parseFloat((i*2).toFixed(2))+' A',f(parseFloat((u/(r1+r2)).toFixed(2)))+' A'],0);return{q:`Série: R₁=${fR(r1)}, R₂=${fR(r2)}, R₃=${fR(r3)}, U=${u}V. Corrente total?`,svg:svgS(r1,r2,u,false),opts,c,exp:`Req=${r1}+${r2}+${r3}=${req}Ω → I=${u}/${req}=<strong>${f(i)} A</strong>. Mesma corrente em todos.`,type:'🔢 CÁLCULO'};},
-  ()=>{const r1=rnd([6,8,12,15,20]),r2=rnd([6,8,12,15,20]),u=rnd([12,24,36,48]);const req=parseFloat((r1*r2/(r1+r2)).toFixed(2)),it=parseFloat((u/req).toFixed(2)),i1=parseFloat((u/r1).toFixed(2)),i2=parseFloat((u/r2).toFixed(2));const{opts,c}=shuf([f(it)+' A',f(i1)+' A',f(i2)+' A',parseFloat((it/2).toFixed(2))+' A'],0);return{q:`Paralelo: R₁=${fR(r1)}, R₂=${fR(r2)}, U=${u}V. Corrente TOTAL na fonte?`,svg:svgP(r1,r2,u),opts,c,exp:`I₁=${f(i1)}A, I₂=${f(i2)}A → It=I₁+I₂=<strong>${f(it)} A</strong>. Correntes somam-se.`,type:'🔢 CÁLCULO'};},
-  ()=>{const r1=rnd([4,5,6,8]),r2=rnd([6,8,12]),r3=rnd([4,6,8]),u=rnd([24,36,48]);const rp=parseFloat((r2*r3/(r2+r3)).toFixed(2)),req=parseFloat((r1+rp).toFixed(2)),it=parseFloat((u/req).toFixed(2)),pt=parseFloat((u*it).toFixed(1));const{opts,c}=shuf([f(pt)+' W',parseFloat((pt/2).toFixed(1))+' W',parseFloat((pt*2).toFixed(1))+' W',parseFloat((it*it*req).toFixed(1))+' W'],0);return{q:`Misto: R₁=${fR(r1)} série + R₂=${fR(r2)}∥R₃=${fR(r3)}, U=${u}V. Potência total?`,svg:svgM(r1,r2,r3,u),opts,c,exp:`Req≈${f(req)}Ω, It=${f(it)}A → Pt=U·It=${u}×${f(it)}=<strong>${f(pt)} W</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const r1=rnd([4,6,8,10]),r2=rnd([4,6,8,10]),u=rnd([12,24,48]);const req=r1+r2,i=parseFloat((u/req).toFixed(2)),u2=parseFloat((i*r2).toFixed(2));const{opts,c}=shuf([f(u2)+' V',u+' V',parseFloat((u2*2).toFixed(2))+' V',parseFloat((i*r1).toFixed(2))+' V'],0);return{q:`Divisor de tensão: R₁=${fR(r1)}, R₂=${fR(r2)}, U=${u}V. Tensão em R₂?`,svg:svgS(r1,r2,u,false),opts,c,exp:`I=${f(i)}A → U₂=I×R₂=${f(i)}×${r2}=<strong>${f(u2)} V</strong>`,type:'🔢 CÁLCULO'};},
-  {q:'A Lei dos Nós (LKC) é baseada na:',svg:null,opts:['Conservação de carga elétrica (ΣI=0)','Conservação de energia (ΣU=0)','Lei de Faraday','Lei de Newton'],c:0,exp:'LKC: ΣI=0 num nó. Toda carga que entra sai — conservação de carga. Enunciada por Kirchhoff aos 21 anos.',type:'💭 CONCEITUAL'},
-  {q:'A Lei das Malhas (LKT) é baseada na:',svg:null,opts:['Conservação de energia (ΣU=0 na malha)','Conservação de carga (ΣI=0)','Lei de Ampère','Indução de Faraday'],c:0,exp:'LKT: ΣU=0 numa malha fechada. Trabalho ao percorrer a malha completa é zero — conservação de energia.',type:'💭 CONCEITUAL'},
-  {q:'Por que a instalação elétrica residencial é em paralelo?',svg:null,opts:['Cada ponto recebe tensão total (220V) e falhas não afetam os outros','Em paralelo a corrente é menor, economizando energia','Em série seria mais eficiente','Em paralelo a tensão se divide proporcionalmente'],c:0,exp:'Paralelo: tensão igual (220V) em todos. Uma lâmpada queimada não afeta as outras. Em série, tudo apagaria.',type:'💭 CONCEITUAL'},
-  ()=>{const r1=rnd([4,6,8]),r2=rnd([4,6,8]),u=rnd([12,24,36]);const req=parseFloat((r1*r2/(r1+r2)).toFixed(2)),it=parseFloat((u/req).toFixed(2)),i1=parseFloat((u/r1).toFixed(2)),i2=parseFloat((u/r2).toFixed(2));const menor=r1<=r2?0:2;const{opts,c}=shuf([`R₁=${fR(r1)} — I₁=${f(i1)}A`,'Corrente igual nos dois',`R₂=${fR(r2)} — I₂=${f(i2)}A`,'Nenhum'],menor);return{q:`Paralelo U=${u}V: R₁=${fR(r1)}, R₂=${fR(r2)}. Qual ramo tem maior corrente?`,svg:svgP(r1,r2,u),opts,c,exp:`Em paralelo U=${u}V em ambos. I=U/R. Menor R → maior I. I₁=${f(i1)}A, I₂=${f(i2)}A.`,type:'🔢 CÁLCULO'};},
-  ()=>{const r1=rnd([3,4,6]),r2=rnd([6,8,12]),r3=rnd([4,6,8]),u=rnd([24,36,48]);const rp=parseFloat((r2*r3/(r2+r3)).toFixed(2)),req=parseFloat((r1+rp).toFixed(2)),it=parseFloat((u/req).toFixed(2));const{opts,c}=shuf([f(req)+' Ω',(r1+r2+r3)+' Ω',f(rp)+' Ω',f(r1+r2)+' Ω'],0);return{q:`Misto: R₁=${fR(r1)} série + R₂=${fR(r2)}∥R₃=${fR(r3)}, U=${u}V. Req total?`,svg:svgM(r1,r2,r3,u),opts,c,exp:`1° Rp=${f(rp)}Ω → 2° Req=R₁+Rp=${r1}+${f(rp)}=<strong>${f(req)} Ω</strong> → It=${f(it)}A`,type:'🔢 CÁLCULO'};},
-  {q:'Ao adicionar mais resistores em paralelo, a resistência equivalente:',svg:null,opts:['Diminui (1/Req=Σ1/Rᵢ)','Aumenta','Permanece igual','Dobra'],c:0,exp:'Mais ramos em paralelo→ 1/Req aumenta→ Req diminui. Mais caminhos para a corrente→ menor "obstáculo" total.',type:'💭 CONCEITUAL'},
-
-  // Extra questions CIRC
-  ()=>{const r1=rnd([2,3,4,5,6]),r2=rnd([2,3,4,5,6]),r3=rnd([2,3,4,5,6]),r4=rnd([2,3,4,5,6]),u=rnd([20,24,30,40]);const req=r1+r2+r3+r4,i=parseFloat((u/req).toFixed(2));const{opts,c}=shuf([f(i)+' A',parseFloat((u/r1).toFixed(2))+' A',parseFloat((i*2).toFixed(2))+' A',f(parseFloat((u/(r1+r2)).toFixed(2)))+' A'],0);return{q:`Série: 4 resistores R₁=${fR(r1)},R₂=${fR(r2)},R₃=${fR(r3)},R₄=${fR(r4)} com U=${u}V. Corrente total?`,svg:null,opts,c,exp:`Req=${req}Ω → I=U/Req=${u}/${req}=<strong>${f(i)}A</strong>. Em série mesma I em todos.`,type:'🔢 CÁLCULO'};},
-  ()=>{const r1=rnd([4,6,8,10]),r2=rnd([4,6,8,10]),r3=rnd([4,6,8,10]),u=rnd([12,24,36]);const req=parseFloat((1/(1/r1+1/r2+1/r3)).toFixed(2)),it=parseFloat((u/req).toFixed(2));const{opts,c}=shuf([f(req)+' Ω',(r1+r2+r3)+' Ω',Math.min(r1,r2,r3)+' Ω',parseFloat((req*2).toFixed(2))+' Ω'],0);return{q:`3 resistores em paralelo: R₁=${fR(r1)},R₂=${fR(r2)},R₃=${fR(r3)}, U=${u}V. Req=?`,svg:svgP(r1,r2,u),opts,c,exp:`1/Req=1/${r1}+1/${r2}+1/${r3}→Req≈<strong>${f(req)}Ω</strong>. It=${f(it)}A.`,type:'🔢 CÁLCULO'};},
-  ()=>{const r1=rnd([2,3,4,5]),r2=rnd([4,6,8,10]),r3=rnd([4,6,8,10]),u=rnd([20,24,30,36]);const rp=parseFloat((r2*r3/(r2+r3)).toFixed(2)),req=parseFloat((r1+rp).toFixed(2)),it=parseFloat((u/req).toFixed(2)),u1=parseFloat((it*r1).toFixed(2)),up=parseFloat((u-u1).toFixed(2)),i2=parseFloat((up/r2).toFixed(2)),i3=parseFloat((up/r3).toFixed(2));const{opts,c}=shuf([f(i2)+' A',f(it)+' A',f(i3)+' A',parseFloat((it/2).toFixed(2))+' A'],0);return{q:`Misto: R₁=${fR(r1)} série + R₂=${fR(r2)}∥R₃=${fR(r3)}, U=${u}V. Corrente em R₂?`,svg:svgM(r1,r2,r3,u),opts,c,exp:`Rp=${f(rp)}Ω, Req=${f(req)}Ω, It=${f(it)}A, Up=${f(up)}V → I₂=Up/R₂=${f(up)}/${r2}=<strong>${f(i2)}A</strong>`,type:'🔢 CÁLCULO'};},
-  {q:'Para calcular a tensão sobre R₃ num circuito misto qualquer, usa-se a Lei das Malhas porque:',svg:null,opts:['ΣU=0 permite encontrar qualquer tensão desconhecida a partir das conhecidas','ΣI=0 define a tensão em cada nó','Kirchhoff só se aplica a circuitos série','Tensão é igual em todos os componentes do misto'],c:0,exp:'LKT: ΣU=0 numa malha. Com as tensões conhecidas (fonte, quedas em outros R), calcula-se a tensão no R desconhecido.',type:'💭 CONCEITUAL'},
-  ()=>{const r1=rnd([5,6,8,10]),r2=rnd([6,8,10,12]),u=rnd([12,24,36,48]);const req=parseFloat((r1*r2/(r1+r2)).toFixed(2)),it=parseFloat((u/req).toFixed(2)),i1=parseFloat((u/r1).toFixed(2)),i2=parseFloat((u/r2).toFixed(2)),p1=parseFloat((u*u/r1).toFixed(1)),p2=parseFloat((u*u/r2).toFixed(1));const maior=p1>=p2?0:1;const{opts,c}=shuf([`R₁=${fR(r1)} → P=${f(p1)}W`,`R₂=${fR(r2)} → P=${f(p2)}W`,'Ambos igual',`A fonte ${u}V`],maior);return{q:`Paralelo: R₁=${fR(r1)}, R₂=${fR(r2)}, U=${u}V. Qual ramo dissipa mais potência?`,svg:svgP(r1,r2,u),opts,c,exp:`P=U²/R. Menor R→maior P. P₁=${f(p1)}W, P₂=${f(p2)}W→<strong>${maior===0?'R₁':'R₂'} dissipa mais</strong>.`,type:'🔢 CÁLCULO'};},
-  {q:'Em que situação Req de um paralelo é IGUAL à metade de um dos resistores?',svg:null,opts:['Quando os dois resistores são iguais (Req=R/2)','Quando um resistor é o dobro do outro','Quando ambos têm resistência zero','Quando a tensão é a metade'],c:0,exp:'Dois R iguais em paralelo: Req=(R×R)/(R+R)=R²/2R=R/2. Req é sempre menor que qualquer R individual.',type:'💭 CONCEITUAL'},
-  ()=>{const r1=rnd([4,6,8]),r2=rnd([4,6,8]),r3=rnd([4,6,8]),u=rnd([24,30,36,48]);const rp=parseFloat((r2*r3/(r2+r3)).toFixed(2)),req=parseFloat((r1+rp).toFixed(2)),it=parseFloat((u/req).toFixed(2)),pt=parseFloat((u*it).toFixed(1)),p1=parseFloat((r1*it*it).toFixed(1));const up=parseFloat((u-it*r1).toFixed(1));const p2=parseFloat((up*up/r2).toFixed(1)),p3=parseFloat((up*up/r3).toFixed(1));const maior=r2<=r3?1:2;const{opts,c}=shuf([`R₁=${fR(r1)}→P=${f(p1)}W`,`R₂=${fR(r2)}→P=${f(p2)}W`,`R₃=${fR(r3)}→P=${f(p3)}W`,`Todos igual`],maior);return{q:`Misto: R₁=${fR(r1)} série + R₂=${fR(r2)}∥R₃=${fR(r3)}, U=${u}V. Qual componente dissipa mais?`,svg:svgM(r1,r2,r3,u),opts,c,exp:`It=${f(it)}A: P₁=${f(p1)}W. Up=${f(up)}V: P₂=${f(p2)}W, P₃=${f(p3)}W → <strong>maior no menor R do paralelo</strong>.`,type:'🔢 CÁLCULO'};},
-  {q:'Num nó de circuito com 3 fios: I₁=5A entrando, I₂=3A saindo. Qual I₃?',svg:null,opts:['2A saindo (LKC: 5=3+2)','2A entrando','8A saindo','5A saindo'],c:0,exp:'LKC: ΣI_entrada=ΣI_saída. 5=3+I₃→I₃=2A saindo. Nenhuma carga é criada ou destruída.',type:'💭 CONCEITUAL'},
-  ()=>{const u=rnd([12,24,36]),r1=rnd([2,3,4]),r2=rnd([6,8,12]),r3=rnd([6,8,12]);const rp=parseFloat((r2*r3/(r2+r3)).toFixed(2)),req=parseFloat((r1+rp).toFixed(2)),it=parseFloat((u/req).toFixed(2)),u1=parseFloat((it*r1).toFixed(2)),up=parseFloat((u-u1).toFixed(2));const{opts,c}=shuf([f(up)+' V',u+' V',f(u1)+' V',parseFloat((up*2).toFixed(2))+' V'],0);return{q:`Misto: R₁=${fR(r1)} série + R₂=${fR(r2)}∥R₃=${fR(r3)}, U=${u}V. Tensão no paralelo?`,svg:svgM(r1,r2,r3,u),opts,c,exp:`It=${f(it)}A, U₁=${f(u1)}V → Up=U−U₁=${u}−${f(u1)}=<strong>${f(up)}V</strong>. Mesma tensão em R₂ e R₃.`,type:'🔢 CÁLCULO'};},
-
-  // ── CIRC EXTRA BATCH 2 ────────────────────────────────────────
-  {q:'Gustav Kirchhoff enunciou suas leis de circuitos em 1845. Qual era sua idade?',svg:null,opts:['21 anos (nasceu em 1824)','35 anos','45 anos','18 anos'],c:0,exp:'Kirchhoff (1824–1887) publicou as leis dos nós e das malhas com apenas 21 anos, como estudante universitário em Königsberg.',type:'💭 HISTÓRICO'},
-  ()=>{const r1=rnd([3,4,5,6]),r2=rnd([6,8,10,12]),r3=rnd([3,4,5,6]),u=rnd([18,24,30,36]);const rp=parseFloat((r2*r3/(r2+r3)).toFixed(2)),req=parseFloat((r1+rp).toFixed(2)),it=parseFloat((u/req).toFixed(2)),u1=parseFloat((it*r1).toFixed(1)),up=parseFloat((u-u1).toFixed(1));const{opts,c}=shuf([f(up)+' V',u+' V',f(u1)+' V',f(parseFloat((up*2).toFixed(1)))+' V'],0);return{q:`Misto: R₁=${fR(r1)} série + R₂=${fR(r2)}∥R₃=${fR(r3)}, U=${u}V. Tensão no ramal paralelo?`,svg:svgM(r1,r2,r3,u),opts,c,exp:`It=${f(it)}A, U₁=${f(u1)}V → Upar = U−U₁ = ${u}−${f(u1)} = <strong>${f(up)} V</strong>`,type:'🔢 CÁLCULO'};},
-  ()=>{const r1=rnd([2,3,4,5]),r2=rnd([4,6,8,10]),r3=rnd([4,6,8,10]),u=rnd([20,24,30,36]);const rp=parseFloat((r2*r3/(r2+r3)).toFixed(2)),req=parseFloat((r1+rp).toFixed(2)),it=parseFloat((u/req).toFixed(2)),up=parseFloat((u-it*r1).toFixed(1)),i2=parseFloat((up/r2).toFixed(2)),i3=parseFloat((up/r3).toFixed(2));const{opts,c}=shuf([f(i2)+' A',f(it)+' A',f(i3)+' A',f(parseFloat((i2/2).toFixed(2)))+' A'],0);return{q:`Misto: R₁=${fR(r1)} série + R₂=${fR(r2)}∥R₃=${fR(r3)}, U=${u}V. Corrente em R₂?`,svg:svgM(r1,r2,r3,u),opts,c,exp:`Req=${f(req)}Ω, It=${f(it)}A, Up=${f(up)}V → I₂ = Up/R₂ = ${f(up)}/${r2} = <strong>${f(i2)} A</strong>`,type:'🔢 CÁLCULO'};},
-  {q:'A lei das malhas de Kirchhoff (LKT) é uma consequência da conservação de energia. Significa que:',svg:null,opts:['A soma das tensões em qualquer caminho fechado é zero — energia conservada','A soma das correntes em qualquer nó é zero','A resistência total é sempre positiva','A potência total do circuito é constante'],c:0,exp:'LKT: ΣU = 0 (malha). Ao percorrer uma malha completa, o trabalho líquido é zero — conservação de energia. Desenvolvida por Kirchhoff em 1845.',type:'💭 CONCEITUAL'},
-  ()=>{const r1=rnd([4,5,6,8,10]),r2=rnd([4,5,6,8,10]),r3=rnd([4,5,6,8,10]),r4=rnd([4,5,6,8,10]),u=rnd([20,24,30,40,48]);const req=r1+r2+r3+r4,i=parseFloat((u/req).toFixed(2)),p_max=parseFloat((Math.max(r1,r2,r3,r4)*i*i).toFixed(1));const r_max=Math.max(r1,r2,r3,r4);const{opts,c}=shuf([fR(r_max)+` — P=${f(p_max)}W`,fR(Math.min(r1,r2,r3,r4)),fR(req/4),'Todos iguais'],0);return{q:`Série: R₁=${fR(r1)},R₂=${fR(r2)},R₃=${fR(r3)},R₄=${fR(r4)}, U=${u}V. Qual resistor aquece mais?`,svg:null,opts,c,exp:`Em série I=${f(i)}A igual. P=R·I². Maior R=${r_max}Ω → P=${f(p_max)}W — <strong>maior calor</strong>.`,type:'🔢 CÁLCULO'};},
-  {q:'Um nó de circuito recebe 8A por dois fios e envia corrente por três fios. Se I₁=3A e I₂=2A saem, qual I₃?',svg:null,opts:['3A (LKC: 8 = 3 + 2 + I₃)','8A','5A','2A'],c:0,exp:'LKC: ΣI_entrada = ΣI_saída → 8 = 3 + 2 + I₃ → I₃ = 3A. Nenhuma carga é criada ou destruída no nó.',type:'💭 CONCEITUAL'},
-  ()=>{const r1=rnd([2,3,4]),r2=rnd([6,8,12]),r3=rnd([6,8,12]),u=rnd([18,24,30,36]);const rp=parseFloat((r2*r3/(r2+r3)).toFixed(2)),req=parseFloat((r1+rp).toFixed(2)),it=parseFloat((u/req).toFixed(2)),pt=parseFloat((u*it).toFixed(1)),p1=parseFloat((r1*it*it).toFixed(1));const up=parseFloat((u-it*r1).toFixed(1));const p2=parseFloat((up*up/r2).toFixed(1)),p3=parseFloat((up*up/r3).toFixed(1));const{opts,c}=shuf([f(pt)+' W',f(p1)+' W',f(parseFloat((pt/2).toFixed(1)))+' W',f(parseFloat((pt*3).toFixed(1)))+' W'],0);return{q:`Misto: R₁=${fR(r1)} série + R₂=${fR(r2)}∥R₃=${fR(r3)}, U=${u}V. Potência TOTAL?`,svg:svgM(r1,r2,r3,u),opts,c,exp:`Req=${f(req)}Ω, It=${f(it)}A → Ptotal = U×It = ${u}×${f(it)} = <strong>${f(pt)} W</strong>. (P₁=${f(p1)}W, P₂=${f(p2)}W, P₃=${f(p3)}W)`,type:'🔢 CÁLCULO'};},
-  {q:'Em qual configuração a falha de um único componente NÃO interrompe os demais?',svg:null,opts:['Paralelo (cada ramo é independente)','Série (caminho único)','Ambos da mesma forma','Depende da resistência do componente'],c:0,exp:'Em paralelo cada ramo tem caminho independente. Abrir um ramo não afeta os outros. Em série, a falha de um interrompe TODO o circuito — ex: pisca-pisca antigo.',type:'💭 CONCEITUAL'},
+  // 1
+  ()=>{const r1=rnd([4,5,6,8]),r2=rnd([4,5,6,8]),r3=rnd([4,5,6,8]),u=rnd([24,36,48,60]);const req=r1+r2+r3;const i=parseFloat((u/req).toFixed(2));
+    const{opts,c}=shuf([
+      `${f(i)} A — I = U/Req com Req = R₁+R₂+R₃`,
+      `${f(parseFloat((u/r1).toFixed(2)))} A — usou só R₁ (ignorou série)`,
+      `${f(parseFloat((i*2).toFixed(2)))} A — dobrou sem justificativa`,
+      `${f(parseFloat((u/(r1+r2)).toFixed(2)))} A — somou só dois resistores`
+    ],0);
+    return{
+      q1:`🔦 <strong>Pisca-pisca série (problema clássico):</strong> Um pisca-pisca antigo tem três lâmpadas em <strong>série</strong>: R₁ = ${fR(r1)}, R₂ = ${fR(r2)}, R₃ = ${fR(r3)}. Quando uma queima, todas apagam.`,
+      q2:`A fonte fornece <strong>U = ${u} V</strong>. Qual a corrente total que percorre o circuito quando todas estão funcionando?`,
+      svg:svgS(r1,r2,u,false),opts,c,exp:`Req = ${r1}+${r2}+${r3} = ${req} Ω → I = ${u}/${req} = <strong>${f(i)} A</strong>. Mesma corrente em todas as lâmpadas.`,type:'🔢 CÁLCULO'};},
+  // 2
+  ()=>{const r1=rnd([6,8,12,15,20]),r2=rnd([6,8,12,15,20]),u=rnd([12,24,36,48]);const req=parseFloat((r1*r2/(r1+r2)).toFixed(2));const it=parseFloat((u/req).toFixed(2));const i1=parseFloat((u/r1).toFixed(2));const i2=parseFloat((u/r2).toFixed(2));
+    const{opts,c}=shuf([
+      `${f(it)} A — It = I₁+I₂ (correntes somam em paralelo)`,
+      `${f(i1)} A — corrente só em R₁ (esqueceu R₂)`,
+      `${f(parseFloat((it/2).toFixed(2)))} A — dividiu por 2 erroneamente`,
+      `${f(parseFloat((u/req/2).toFixed(2)))} A — usou metade de Req`
+    ],0);
+    return{
+      q1:`🏠 <strong>Tomadas residenciais em paralelo:</strong> Numa casa, as tomadas são em paralelo para garantir a mesma tensão em cada aparelho. Dois aquecedores: R₁ = ${fR(r1)} e R₂ = ${fR(r2)}.`,
+      q2:`A rede fornece <strong>U = ${u} V</strong>. Qual a corrente <strong>total</strong> fornecida pela fonte? (Dica: em paralelo, I₁ = U/R₁ e I₂ = U/R₂, depois some)`,
+      svg:svgP(r1,r2,u),opts,c,exp:`I₁ = ${f(i1)} A, I₂ = ${f(i2)} A → It = ${f(i1)}+${f(i2)} = <strong>${f(it)} A</strong>`,type:'🔢 CÁLCULO'};},
+  // 3
+  ()=>{const r1=rnd([4,5,6,8]),r2=rnd([6,8,12]),r3=rnd([4,6,8]),u=rnd([24,36,48]);const rp=parseFloat((r2*r3/(r2+r3)).toFixed(2));const req=parseFloat((r1+rp).toFixed(2));const it=parseFloat((u/req).toFixed(2));const pt=parseFloat((u*it).toFixed(1));
+    const{opts,c}=shuf([
+      `${f(pt)} W — P = U·It`,
+      `${f(parseFloat((pt/2).toFixed(1)))} W — dividiu por 2`,
+      `${f(parseFloat((pt*2).toFixed(1)))} W — dobrou`,
+      `${f(parseFloat((it*it*req).toFixed(1)))} W — P = I²R (também correto)`
+    ],0);
+    return{
+      q1:`🏭 <strong>Painel elétrico industrial:</strong> Um painel usa circuito misto: R₁ = ${fR(r1)} em série com R₂ = ${fR(r2)}∥R₃ = ${fR(r3)} em paralelo. Fonte: <strong>${u} V</strong>.`,
+      q2:`O engenheiro precisa da potência total para especificar a fonte. Use: Req ≈ ${f(req)} Ω e It ≈ ${f(it)} A. Qual a potência total?`,
+      svg:svgM(r1,r2,r3,u),opts,c,exp:`P = U·It = ${u}×${f(it)} = <strong>${f(pt)} W</strong>`,type:'🔢 CÁLCULO'};},
+  // 4
+  ()=>{const r1=rnd([4,6,8,10]),r2=rnd([4,6,8,10]),u=rnd([12,24,48]);const req=r1+r2;const i=parseFloat((u/req).toFixed(2));const u2=parseFloat((i*r2).toFixed(2));
+    const{opts,c}=shuf([
+      `${f(u2)} V — U₂ = I·R₂ (divisor de tensão)`,
+      `${u} V — toda a tensão em R₂ (apenas em circuito aberto)`,
+      `${f(parseFloat((u/2).toFixed(2)))} V — metade (válido só quando R₁=R₂)`,
+      `${f(parseFloat((i*r1).toFixed(2)))} V — queda em R₁ (resistor errado)`
+    ],0);
+    return{
+      q1:`📡 <strong>Divisor de tensão para Arduino:</strong> Um sensor de 5 V precisa ser adaptado para um Arduino de 3,3 V. O projetista usa R₁ = ${fR(r1)} e R₂ = ${fR(r2)} em série.`,
+      q2:`A fonte é de <strong>U = ${u} V</strong>. Qual a queda de tensão em R₂? (Essa será a tensão de entrada do Arduino — deve ser ≤ 3,3 V)`,
+      svg:svgS(r1,r2,u,false),opts,c,exp:`I = ${u}/${req} = ${f(i)} A → U₂ = ${f(i)}×${r2} = <strong>${f(u2)} V</strong>`,type:'🔢 APLICAÇÃO'};},
+  // 5
+  ()=>{const r1v=rnd([4,5,6]),r2v=rnd([6,8,12]),r3v=rnd([4,6,8]),u=rnd([24,36,48]);const rp=parseFloat((r2v*r3v/(r2v+r3v)).toFixed(2));const req=parseFloat((r1v+rp).toFixed(2));const it=parseFloat((u/req).toFixed(2));const upar=parseFloat((it*rp).toFixed(2));const i2=parseFloat((upar/r2v).toFixed(2));
+    const{opts,c}=shuf([
+      `${f(i2)} A — I₂ = U_par/R₂ (tensão no paralelo ÷ R₂)`,
+      `${f(it)} A — corrente total (não só em R₂)`,
+      `${f(parseFloat((upar/r3v).toFixed(2)))} A — corrente em R₃ (ramo errado)`,
+      `${f(parseFloat((it/2).toFixed(2)))} A — metade da total (válido só quando R₂=R₃)`
+    ],0);
+    return{
+      q1:`🔬 <strong>Bancada de testes:</strong> Circuito misto com R₁ = ${fR(r1v)} em série com R₂ = ${fR(r2v)}∥R₃ = ${fR(r3v)}. Fonte: ${u} V. A corrente total It = ${f(it)} A e a tensão no paralelo U_par = ${f(upar)} V.`,
+      q2:`Com os dados fornecidos (U_par = ${f(upar)} V e R₂ = ${fR(r2v)}), qual a corrente <strong>apenas em R₂</strong>?`,
+      svg:svgM(r1v,r2v,r3v,u),opts,c,exp:`I₂ = U_par/R₂ = ${f(upar)}/${r2v} = <strong>${f(i2)} A</strong>`,type:'🔢 ANÁLISE'};},
+  // 6
+  ()=>{const r1=rnd([4,5,6,8]),r2=rnd([4,6,8]),r3=rnd([6,8,12]),u=rnd([24,36,48]);const rp=parseFloat((r2*r3/(r2+r3)).toFixed(2));const req=parseFloat((r1+rp).toFixed(2));const it=parseFloat((u/req).toFixed(2));const pt=parseFloat((u*it).toFixed(1));
+    const{opts,c}=shuf([
+      `${f(req)} Ω — série: R₁ + Rp (onde Rp = R₂∥R₃)`,
+      `${r1+r2+r3} Ω — somou tudo como série (ignorou o paralelo)`,
+      `${parseFloat((r1*rp/(r1+rp)).toFixed(2))} Ω — paralelou R₁ com Rp (errado)`,
+      `${parseFloat((rp).toFixed(2))} Ω — calculou só o paralelo`
+    ],0);
+    return{
+      q1:`⚙️ <strong>Circuito de controle:</strong> Num circuito misto, R₁ = ${fR(r1)} é colocado em série com a combinação paralela de R₂ = ${fR(r2)} e R₃ = ${fR(r3)}. Fonte: ${u} V.`,
+      q2:`Para calcular a corrente total, precisa-se de Req. Primeiro Rp = R₂∥R₃ = ${f(rp)} Ω. Depois, qual é a <strong>Req total</strong>?`,
+      svg:svgM(r1,r2,r3,u),opts,c,exp:`Req = R₁ + Rp = ${r1} + ${f(rp)} = <strong>${f(req)} Ω</strong>. It = ${u}/${f(req)} = ${f(it)} A, Pt = ${f(pt)} W`,type:'🔢 CÁLCULO'};},
+  // 7
+  {
+    q1:`⚡ <strong>Lei de Kirchhoff dos Nós (LKC):</strong> Num nó elétrico, tudo que entra deve sair — é a conservação de carga. Em uma bifurcação, chegam I₁ = 8 A e I₂ = 3 A. Saem I₃ e I₄ = 4 A.`,
+    q2:`Aplicando a LKC: ΣI_entrada = ΣI_saída. Qual o valor de <strong>I₃</strong>?`,
+    svg:null,
+    opts:['I₃ = 7 A — 8+3 = I₃+4 → I₃ = 11−4 = 7 A','I₃ = 11 A — somou as entradas sem subtrair I₄','I₃ = 4 A — usou o mesmo valor de I₄','I₃ = 5 A — fez 8−3 = 5 (subtração incorreta)'],
+    c:0,exp:'LKC: I₁+I₂ = I₃+I₄ → 8+3 = I₃+4 → I₃ = 11−4 = <strong>7 A</strong>. Nenhuma carga é criada ou destruída.',type:'🔢 APLICAÇÃO'},
+  // 8
+  {
+    q1:`🔑 <strong>Lei de Kirchhoff das Malhas (LKT):</strong> A soma das tensões em qualquer malha fechada é zero — é a conservação de energia. Malha com fonte 24 V, R₁ = 6 Ω e R₂ (desconhecido). Corrente I = 2 A.`,
+    q2:`Aplicando LKT (sentido horário): +24 − R₁·I − R₂·I = 0. Qual o valor de <strong>R₂</strong>?`,
+    svg:null,
+    opts:['R₂ = 6 Ω — 24−12−2R₂=0 → 2R₂=12 → R₂=6 Ω','R₂ = 12 Ω — não subtraiu a queda em R₁','R₂ = 18 Ω — somou ao invés de subtrair','R₂ = 3 Ω — dividiu por 4 ao invés de 2'],
+    c:0,exp:'LKT: 24 − 6×2 − R₂×2 = 0 → 24 − 12 − 2R₂ = 0 → 2R₂ = 12 → <strong>R₂ = 6 Ω</strong>',type:'🔢 APLICAÇÃO'},
+  // 9
+  {
+    q1:`🏠 <strong>Disjuntor em série × Tomadas em paralelo:</strong> Numa instalação residencial, o disjuntor fica em série com as tomadas, mas as tomadas entre si são em paralelo. Um aluno confunde as funções.`,
+    q2:`Se o disjuntor "cair" (abrir o circuito), o que acontece com os aparelhos ligados nas tomadas? E se apenas uma tomada queimar (circuito aberto naquele ramo)?`,
+    svg:null,
+    opts:['Disjuntor: todos param (série). Tomada queimada: só esse ramo para (paralelo — outros continuam).','Disjuntor: só alguns param. Tomada: todos param.','Disjuntor: nada acontece. Tomada: todos param.','Ambos os casos: todos os aparelhos param simultaneamente.'],
+    c:0,exp:'Série (disjuntor): ponto único — abre e interrompe tudo. Paralelo (tomadas): cada ramo é independente — um queimado não afeta os outros.',type:'💭 ANÁLISE'},
+  // 10
+  {
+    q1:`💡 <strong>Dois LEDs em série com resistor:</strong> Dois LEDs idênticos precisam de 2 V cada e 20 mA para funcionar. Eles são ligados em série com um resistor a uma bateria de 9 V.`,
+    q2:`A queda total nos LEDs é 2+2 = 4 V. A tensão restante para o resistor é 9−4 = 5 V. Qual o resistor necessário para limitar a corrente a 20 mA? (R = U/I)`,
+    svg:null,
+    opts:['250 Ω — R = 5V/0,02A = 250 Ω','450 Ω — calculou 9V/20mA (ignorou a queda nos LEDs)','100 Ω — calculou (9V−2V)/0,02A (só um LED)','125 Ω — dividiu o resultado por 2 sem motivo'],
+    c:0,exp:'Queda no resistor = 9−4 = 5 V. R = U/I = 5/0,02 = <strong>250 Ω</strong>. Sem o resistor, os LEDs queimariam imediatamente.',type:'🔢 APLICAÇÃO'},
+  // 11
+  ()=>{const r1=rnd([5,10,15,20]),r2=rnd([5,10,15,20]),r3=rnd([5,10,15,20]),u=rnd([15,30,45,60]);const req=r1+r2+r3;const i=parseFloat((u/req).toFixed(2));const req2=r1+r3;const i2=parseFloat((u/req2).toFixed(2));
+    const{opts,c}=shuf([
+      `${f(i2)} A — Req caiu (R₂ removido), corrente aumentou`,
+      `${f(i)} A — corrente não mudou (incorreto)`,
+      `0 A — circuito aberto (R₂ foi removido, não quebrado)`,
+      `${f(parseFloat((i/2).toFixed(2)))} A — corrente caiu à metade`
+    ],0);
+    return{
+      q1:`🔧 <strong>Reparo de circuito:</strong> Um técnico retira R₂ = ${fR(r2)} de um circuito série (R₁ = ${fR(r1)}, R₂, R₃ = ${fR(r3)}) sem abrir o circuito — apenas "curta" o trecho de R₂.`,
+      q2:`Antes: Req = ${req} Ω, I = ${f(i)} A. Após remover R₂ (mantendo o fio): Req_nova = ${r1}+${r3} = ${req2} Ω. Qual a nova corrente? (U = ${u} V)`,
+      svg:null,opts,c,exp:`Req cai de ${req} para ${req2} Ω → I = ${u}/${req2} = <strong>${f(i2)} A</strong>. Menos resistência → mais corrente!`,type:'🔢 ANÁLISE'};},
+  // 12
+  ()=>{const r1=rnd([4,6,8]),r2=rnd([6,8,12]),r3=rnd([4,6,12]),u=rnd([24,36,48]);const rp=parseFloat((r2*r3/(r2+r3)).toFixed(2));const req=parseFloat((r1+rp).toFixed(2));const it=parseFloat((u/req).toFixed(2));const upar=parseFloat((it*rp).toFixed(2));const i2=parseFloat((upar/r2).toFixed(2));const i3=parseFloat((upar/r3).toFixed(2));
+    const{opts,c}=shuf([
+      `I₂ = ${f(i2)} A e I₃ = ${f(i3)} A — ambas via I = U_par/R`,
+      `I₂ = I₃ = ${f(it/2)} A — dividiu corrente total em partes iguais`,
+      `I₂ = ${f(it)} A, I₃ = 0 — toda corrente em R₂`,
+      `I₂ = I₃ = ${f(it)} A — mesma corrente total nos dois`
+    ],0);
+    return{
+      q1:`⚡ <strong>Circuito misto completo:</strong> R₁ = ${fR(r1)} em série com R₂ = ${fR(r2)}∥R₃ = ${fR(r3)}, fonte ${u} V. Já calculado: It = ${f(it)} A e tensão no paralelo U_par = ${f(upar)} V.`,
+      q2:`Usando U_par = ${f(upar)} V, calcule as correntes individuais em <strong>R₂ e R₃</strong>. Lembre: em paralelo cada ramo tem a mesma tensão.`,
+      svg:svgM(r1,r2,r3,u),opts,c,exp:`I₂ = ${f(upar)}/${r2} = ${f(i2)} A &nbsp; I₃ = ${f(upar)}/${r3} = ${f(i3)} A &nbsp; Verificação: ${f(i2)}+${f(i3)} ≈ ${f(it)} A ✓`,type:'🔢 CÁLCULO'};},
 ],
-};
+}
 
 function buildQuiz(mod){
   const raw=(BANK[mod]||[]);
@@ -2354,6 +3250,20 @@ function initBench(){
     e.preventDefault();
     logSuspicion('RECORTAR','Tentativa de recortar conteúdo (Ctrl+X)');
   });
+  // PASTE — BLOQUEADO GLOBALMENTE (inclusive em inputs de formulário)
+  // O aluno deve DIGITAR o nome/e-mail — sem colar
+  document.addEventListener('paste',e=>{
+    e.preventDefault();
+    const tag=(e.target||{}).tagName||'';
+    // Registra infração apenas fora de campos de texto (não penalizar typing zones)
+    if(!['INPUT','TEXTAREA'].includes(tag)){
+      logSuspicion('COLAR','Tentativa de colar conteúdo');
+    }
+    // Em qualquer caso: bloquear silenciosamente
+  },true); // capture phase para garantir bloqueio antes de qualquer handler
+
+  // ── dblclick: LIBERADO (é o mecanismo de resposta) ────────────
+  // Não bloquear dblclick — é usado pelo aluno para confirmar alternativas
 
   // ── 2. CONTEXT MENU (right click / long press menu) ───────────
   document.addEventListener('contextmenu',e=>{
@@ -2503,6 +3413,28 @@ function initBench(){
 
 // ══ INIT ══════════════════════════════════════════════════════════
 ['ohm','pot','cap','ind','circ'].forEach(m=>renderGate(m));
+
+// ── Watermark — dynamic with student name ─────────────────────────
+(function buildWatermark(){
+  const container=document.getElementById('wm-layer');
+  if(!container)return;
+  // Updated dynamically when student identifies themselves
+  function setWM(text){
+    container.innerHTML='';
+    for(let i=0;i<40;i++){
+      const el=document.createElement('div');
+      el.className='wm-txt';
+      el.textContent=text;
+      container.appendChild(el);
+    }
+  }
+  window._updateWatermark=function(nome,turma){
+    const dt=new Date().toLocaleDateString('pt-BR');
+    setWM((nome||'VISITANTE')+' · '+(turma||'')+(turma?' · ':'')+dt);
+  };
+  // Initial generic watermark
+  setWM('C.E. Helena Nasser · '+new Date().toLocaleDateString('pt-BR'));
+})();
 buildGloss();
 setTimeout(initSims,100);
 // Fire pending showSci
