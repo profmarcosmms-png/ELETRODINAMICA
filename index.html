@@ -1437,7 +1437,8 @@ function svgM(r1,r2,r3,u){
 <circle r="4" fill="#00aaff" opacity=".6"><animateMotion dur="2.8s" begin="1.4s" repeatCount="indefinite" path="M400,16 L502,16 L502,142 L400,142"/></circle></svg>`;
 }
 // ══ QUIZ CONTROL (localStorage — persiste entre sessões) ══════════
-const MAX_TENT=2, TEMPO_MS=50*60*1000;
+const MAX_TENT=2, TEMPO_MS=50*60*1000, TOTAL_Q=6;
+const fmtTempo=ms=>{const m=Math.floor(ms/60000),s=Math.floor((ms%60000)/1000);return m+'min '+s+'s';};
 const QCtrl={};
 const APPSCRIPT='https://script.google.com/macros/s/AKfycbwi1p7tZiHFb5G4Q1lN-NqmsQTEKGzml5mI18ZmdVrxm21DAwsUWKPSgETh-4jgtba2yw/exec';
 
@@ -1475,6 +1476,66 @@ if(new URLSearchParams(window.location.search).get('reset')==='1'){
   }catch(e){}
 }
 
+// ── TEACHER UNLOCK PANEL (?unlock=1) ─────────────────────────────────
+if(new URLSearchParams(window.location.search).get('unlock')==='1'){
+  document.addEventListener('DOMContentLoaded',function(){
+    const panel=document.createElement('div');
+    panel.id='unlock-panel';
+    panel.style.cssText='position:fixed;top:0;left:0;width:100%;z-index:999999;background:#030712;border-bottom:2px solid #00f5ff;padding:16px 20px;font-family:Orbitron,monospace;font-size:.75rem;color:#e2e8f0;box-shadow:0 4px 24px rgba(0,245,255,.2)';
+    panel.innerHTML=`
+      <div style="color:#00f5ff;font-size:.85rem;font-weight:bold;margin-bottom:10px">🔓 PAINEL DO PROFESSOR — DESBLOQUEIO DE MÓDULOS</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <input id="ul-nome" placeholder="Nome do aluno" style="padding:6px 10px;background:#1e293b;border:1px solid #334155;border-radius:5px;color:#e2e8f0;font-size:.72rem;width:200px">
+        <select id="ul-mod" style="padding:6px 10px;background:#1e293b;border:1px solid #334155;border-radius:5px;color:#e2e8f0;font-size:.72rem">
+          <option value="">Todos os módulos</option>
+          <option value="ohm">Lei de Ohm</option>
+          <option value="pot">Potência</option>
+          <option value="cap">Capacitores</option>
+          <option value="ind">Indutores</option>
+          <option value="circ">Circuitos</option>
+        </select>
+        <button onclick="teacherUnlock()" style="padding:6px 14px;background:#0e7490;border:none;border-radius:5px;color:#fff;cursor:pointer;font-family:Orbitron,monospace;font-size:.7rem">🔓 DESBLOQUEAR</button>
+        <button onclick="teacherUnlockAll()" style="padding:6px 14px;background:#7c3aed;border:none;border-radius:5px;color:#fff;cursor:pointer;font-family:Orbitron,monospace;font-size:.7rem">🔓 TODOS OS ALUNOS</button>
+        <button onclick="document.getElementById('unlock-panel').remove()" style="padding:6px 10px;background:#334155;border:none;border-radius:5px;color:#94a3b8;cursor:pointer;font-size:.7rem">✕ Fechar</button>
+      </div>
+      <div id="ul-status" style="margin-top:8px;color:#fbbf24;font-size:.7rem;min-height:1.2em"></div>`;
+    document.body.prepend(panel);
+  });
+}
+window.teacherUnlock=function(){
+  const nome=(document.getElementById('ul-nome')||{}).value||'';
+  const mod=(document.getElementById('ul-mod')||{}).value||'';
+  const st=document.getElementById('ul-status');
+  if(!nome.trim()){if(st)st.textContent='⚠️ Informe o nome do aluno.';return;}
+  try{
+    const mods=mod?[mod]:['ohm','pot','cap','ind','circ'];
+    let count=0;
+    mods.forEach(m=>{
+      // Remove all keys for this student+module (any date)
+      Object.keys(localStorage).forEach(k=>{
+        if(k.startsWith('qc_'+m+'_')){
+          const nm=(nome||'').toLowerCase().trim().replace(/[^a-z0-9]/g,'').substring(0,20);
+          if(k.includes(nm)){localStorage.removeItem(k);count++;}
+        }
+      });
+    });
+    if(st) st.textContent=`✅ ${count} registro(s) removido(s) para "${nome}" — módulo(s) desbloqueado(s).`;
+  }catch(e){if(st)st.textContent='❌ Erro: '+e.message;}
+};
+window.teacherUnlockAll=function(){
+  const mod=(document.getElementById('ul-mod')||{}).value||'';
+  const st=document.getElementById('ul-status');
+  try{
+    let count=0;
+    Object.keys(localStorage).forEach(k=>{
+      if(k.startsWith('qc_')&&(!mod||k.startsWith('qc_'+mod+'_'))){
+        localStorage.removeItem(k);count++;
+      }
+    });
+    if(st) st.textContent=`✅ ${count} registro(s) removido(s). Todos os módulos${mod?' de '+mod:''} desbloqueados para nova avaliação.`;
+  }catch(e){if(st)st.textContent='❌ Erro: '+e.message;}
+};
+
 function renderGate(mod){
   const g=elById(mod+'-gate');if(!g)return;
   const ctrl=_getCtrl(mod);
@@ -1482,7 +1543,7 @@ function renderGate(mod){
   const agora=Date.now();
   if(tent>=MAX_TENT){
     g.innerHTML=`<div class="quiz-gate"><h3>🔒 TENTATIVAS ENCERRADAS</h3>
-    <p>Você realizou as ${MAX_TENT} tentativas permitidas.<br>Melhor nota: <strong style="color:var(--neon)">${ctrl.melhor<0?'—':ctrl.melhor+'/10'}</strong></p>
+    <p>Você realizou as ${MAX_TENT} tentativas permitidas.<br>Melhor nota: <strong style="color:var(--neon)">${ctrl.melhor<0?'—':ctrl.melhor+'/'+TOTAL_Q}</strong></p>
     <div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:12px;font-size:.9rem;color:#fca5a5;margin-top:10px">⚠️ Resultado registrado automaticamente.</div></div>`;
     return;
   }
@@ -1702,59 +1763,90 @@ function toggleEx(el){
   box.dataset.open=open?'0':'1';
 }
 
-function showResult(mod){
+function showResult(mod,forcedByInfraction){
   if(QCtrl[mod]&&QCtrl[mod]._timer)clearInterval(QCtrl[mod]._timer);
   const s=QCtrl[mod];if(!s)return;
-  const qwEl=elById(mod+'-qwrap');if(qwEl){qwEl.style.display='none';qwEl.innerHTML='';}// clear all answers
+  const qwEl=elById(mod+'-qwrap');if(qwEl){qwEl.style.display='none';qwEl.innerHTML='';}
   const rEl=elById(mod+'-result');if(!rEl)return;
   rEl.style.display='block';
+
+  const tempoMs=Date.now()-s.t0;
+  const pct=Math.round(s.score/TOTAL_Q*100);
   const scoreEl=elById(mod+'-sc');if(scoreEl)scoreEl.textContent=s.score;
-  const pct=Math.round(s.score/10*100);
-  const [[,msg,col]]=[[90,'🏆 EXCELENTE!','var(--green)'],[75,'⭐ MUITO BOM!','var(--neon)'],[60,'👍 BOM!','var(--gold)'],[0,'📖 Estude mais e refaça!','var(--red)']].filter(([t])=>pct>=t);
+  const[[,msg,col]]=[[90,'🏆 EXCELENTE!','var(--green)'],[75,'⭐ MUITO BOM!','var(--neon)'],[60,'👍 BOM!','var(--gold)'],[0,'📖 Estude mais e refaça!','var(--red)']].filter(([t])=>pct>=t);
   const rmEl=elById(mod+'-rm'),rsEl=elById(mod+'-rs');
-  if(rmEl){rmEl.textContent=msg;rmEl.style.color=col;}
-  if(rsEl)rsEl.textContent=`Você acertou ${s.score} de 10 questões (${pct}%) · Tempo: ${Math.round((Date.now()-s.t0)/60000)} min`;
+  if(rmEl){rmEl.textContent=forcedByInfraction?'🚨 AVALIAÇÃO ENCERRADA POR INFRAÇÃO':msg;rmEl.style.color=forcedByInfraction?'var(--red)':col;}
+  if(rsEl)rsEl.textContent=`Você acertou ${s.score} de ${TOTAL_Q} questões (${pct}%) · Tempo: ${fmtTempo(tempoMs)}`;
+
+  // Gabarito detalhado por questão
+  const gabArr=Array.from({length:TOTAL_Q},(_,i)=>s.answers[i]??0);
+  const gabStr=gabArr.map((a,i)=>`Q${i+1}:${a?'✓':'✗'}`).join(' | ');
+
   const ctrl=_getCtrl(mod,s.nome);
-  const ehMelhor=s.score>ctrl.melhor;
-  if(ehMelhor)ctrl.melhor=s.score;
-  ctrl.tent.push({score:s.score,pct,data:new Date().toLocaleString('pt-BR')});
+  const ehMelhor=s.score>(ctrl.melhor??-1);
+  if(ehMelhor) ctrl.melhor=s.score;
+  if(!ctrl.t0) ctrl.t0=s.t0;
+  ctrl.tent.push({score:s.score,pct,data:new Date().toLocaleString('pt-BR'),tempo:fmtTempo(tempoMs),gab:gabArr,infraction:!!forcedByInfraction});
   _saveCtrl(mod,ctrl,s.nome);
   const numTent=ctrl.tent.length;
+
+  // Info block
   const ti=document.createElement('div');
-  ti.style.cssText='margin-top:12px;background:var(--bg3);border:1px solid rgba(0,245,255,.15);border-radius:8px;padding:12px;font-size:.9rem;color:var(--txt2);line-height:1.8';
-  if(numTent<MAX_TENT){
+  ti.style.cssText='margin-top:12px;background:var(--bg3);border:1px solid rgba(0,245,255,.15);border-radius:8px;padding:12px;font-size:.9rem;color:var(--txt2);line-height:1.9';
+  if(forcedByInfraction){
+    ti.innerHTML=`🚨 <strong style="color:var(--red)">Resultado enviado por infração de segurança.</strong><br>
+      Tentativa ${numTent}/${MAX_TENT} · Nota desta tentativa: <strong>${s.score}/${TOTAL_Q}</strong><br>
+      Melhor nota registrada: <strong style="color:var(--neon)">${ctrl.melhor}/${TOTAL_Q}</strong>`;
+  } else if(numTent<MAX_TENT){
     const restMin=Math.max(0,Math.round((TEMPO_MS-(Date.now()-ctrl.t0))/60000));
-    ti.innerHTML=`Tentativa <strong style="color:var(--neon)">${numTent}/${MAX_TENT}</strong> concluída.${ehMelhor?' ⭐ <strong style="color:var(--gold)">Nova melhor nota!</strong>':''}<br>Ainda tem <strong>1 tentativa</strong> disponível (~${restMin} min restantes).`;
-  }else{
-    ti.innerHTML=`🏁 <strong>Tentativas encerradas.</strong> Melhor nota: <strong style="color:var(--neon)">${ctrl.melhor}/10 (${Math.round(ctrl.melhor/10*100)}%)</strong><br><span style="color:var(--gold)">✅ Maior nota enviada à planilha da turma ${s.turma}.</span>`;
+    ti.innerHTML=`Tentativa <strong style="color:var(--neon)">${numTent}/${MAX_TENT}</strong> concluída.${ehMelhor?' ⭐ <strong style="color:var(--gold)">Nova melhor nota!</strong>':''}<br>
+      Ainda tem <strong>1 tentativa</strong> disponível (~${restMin} min restantes).<br>
+      <span style="color:var(--neon3);font-size:.82rem">A maior nota entre as duas será mantida na planilha.</span>`;
+  } else {
+    ti.innerHTML=`🏁 <strong>Tentativas encerradas.</strong> Melhor nota: <strong style="color:var(--neon)">${ctrl.melhor}/${TOTAL_Q} (${Math.round(ctrl.melhor/TOTAL_Q*100)}%)</strong><br>
+      <span style="color:var(--gold)">✅ Maior nota enviada à planilha da turma ${s.turma}.</span>`;
   }
   rEl.appendChild(ti);
-  // ── Toast de conclusão ─────────────────────────────────────────
-  showToast(`✅ Atividade concluída! ${s.nome} · ${s.score}/10 · Turma ${s.turma}`,'ok');
-  // ── Envio à planilha por turma ─────────────────────────────────
-  if(ehMelhor||numTent>=MAX_TENT) sendToSheet(s,ctrl);
+
+  // Gabarito visual por questão
+  const gd=document.createElement('div');
+  gd.style.cssText='margin-top:10px;padding:10px 12px;background:rgba(0,245,255,.03);border:1px solid rgba(0,245,255,.1);border-radius:7px;font-size:.85rem;line-height:2;font-family:Orbitron,monospace;letter-spacing:.5px';
+  gd.innerHTML='<span style="color:var(--neon3);font-size:.6rem;display:block;margin-bottom:4px">GABARITO DESTA TENTATIVA</span>'+
+    gabArr.map((a,i)=>`<span style="color:${a?'var(--green)':'var(--red)'};margin-right:12px">Q${i+1} ${a?'✓':'✗'}</span>`).join('');
+  rEl.appendChild(gd);
+
+  showToast(`${forcedByInfraction?'🚨 Infração':'✅ Concluído'} · ${s.nome} · ${s.score}/${TOTAL_Q} · Turma ${s.turma}`,'ok');
+
+  // Regra de envio:
+  // 1ª tentativa → sempre envia
+  // 2ª tentativa ≤50min → envia só se melhorou (mantém maior nota)
+  // Infração → sempre envia imediatamente
+  const deveEnviar=forcedByInfraction||numTent===1||(numTent<=MAX_TENT&&ehMelhor)||numTent>=MAX_TENT;
+  if(deveEnviar) sendToSheet(s,ctrl,gabArr,gabStr,tempoMs,numTent,forcedByInfraction);
 }
 
-// ── Envio direto à planilha por turma (sem email individual) ──────
-function sendToSheet(s,ctrl){
+// ── Envio à planilha — dados completos por turma ──────────────────────
+function sendToSheet(s,ctrl,gabArr,gabStr,tempoMs,numTent,infraction){
   const payload={
     tipo:'quiz',
     nome:s.nome,
-    email:'',             // não envia email individual
+    email:s.email||'',
     turma:s.turma,
     serie:s.serie||'',
     modulo:s.mod.toUpperCase(),
     acertos:ctrl.melhor,
-    total:10,
-    percentual:Math.round(ctrl.melhor/10*100),
-    gabarito:s.score+'/10 — '+Math.round(s.score/10*100)+'%',
-    tempo:Math.round((Date.now()-s.t0)/1000)+'s',
-    tentativa:ctrl.tent.length,
-    ehMelhorNota:true,
+    total:TOTAL_Q,
+    percentual:Math.round(ctrl.melhor/TOTAL_Q*100),
+    gabarito:gabStr,
+    gabArr:gabArr,
+    tempo:fmtTempo(tempoMs),
+    tentativa:numTent,
+    ehMelhorNota:ctrl.melhor===s.score,
+    infraction:!!infraction,
     dataHora:new Date().toLocaleString('pt-BR',{timeZone:'America/Sao_Paulo'})
   };
   fetch(APPSCRIPT,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)})
-    .then(()=>showToast(`📊 Registrado na planilha · Turma ${s.turma}`,'ok'))
+    .then(()=>showToast(`📊 Registrado · Turma ${s.turma}${infraction?' ⚠️ infração':''}`.trim(),'ok'))
     .catch(()=>showToast('⚠️ Erro ao registrar. Verifique a conexão.','warn'));
 }
 
@@ -2423,8 +2515,8 @@ function buildQuiz(mod){
   const bank=raw.map(q=>typeof q==='function'?q():q);
   // Fisher-Yates shuffle
   for(let i=bank.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[bank[i],bank[j]]=[bank[j],bank[i]];}
-  // Pick 10 and also shuffle opts within each question
-  return bank.slice(0,10).map(q=>{
+  // Pick TOTAL_Q and also shuffle opts within each question
+  return bank.slice(0,TOTAL_Q).map(q=>{
     if(q.opts&&q.c!==undefined){
       const correct=q.opts[q.c];
       const wrong=q.opts.filter((_,i)=>i!==q.c).sort(()=>Math.random()-.5);
@@ -3125,8 +3217,8 @@ function initBench(){
     if(warn){
       const r=MAX_SUSP-suspCount;
       warn.textContent = r>0
-        ? '🚨 ATENÇÃO: '+r+' INFRAÇÃO(ÕES) RESTANTE(S) — QUIZ SERÁ REINICIADO!'
-        : '🚨 LIMITE ATINGIDO — BLOQUEANDO AGORA!';
+        ? '🚨 ATENÇÃO: '+r+' INFRAÇÃO(ÕES) RESTANTE(S) — RESULTADO SERÁ ENVIADO AO PROFESSOR!'
+        : '🚨 LIMITE ATINGIDO — RESULTADO ENVIADO E AVALIAÇÃO BLOQUEADA!';
     }
 
     // Red flash
@@ -3140,9 +3232,19 @@ function initBench(){
     if(suspCount>=MAX_SUSP) setTimeout(triggerSecReset,600);
   }
 
-  // ── Trigger reset ─────────────────────────────────────────────
+  // ── Trigger reset — envia resultado à planilha antes de bloquear ─
   function triggerSecReset(){
     playAlert(true);
+    // Enviar resultado de TODOS os módulos ativos para a planilha (com flag infraction)
+    ['ohm','pot','cap','ind','circ'].forEach(mod=>{
+      const s=QCtrl[mod];
+      if(s&&s.nome&&s.idx>0){
+        // Encerrar o timer se existir
+        if(s._timer) clearInterval(s._timer);
+        // Chamar showResult com flag de infração (envia à planilha automaticamente)
+        try{ showResult(mod, true); } catch(e){}
+      }
+    });
     const ov=document.getElementById('sec-overlay');
     const cnt=document.getElementById('so-count');
     if(cnt) cnt.textContent=suspCount;
@@ -3150,7 +3252,6 @@ function initBench(){
     document.querySelectorAll('.opt,.go,.btn-start-quiz').forEach(b=>{
       b.disabled=true; b.style.pointerEvents='none';
     });
-    // Force back to fullscreen if not in it
     setTimeout(reqFS, 500);
   }
 
@@ -3163,7 +3264,7 @@ function initBench(){
     const warn=document.getElementById('sb-warn');
     if(bar){ bar.classList.remove('show','pulse'); }
     if(num)  num.textContent='0';
-    if(warn) warn.textContent='🚨 ATENÇÃO: APÓS 3 INFRAÇÕES O QUIZ SERÁ ZERADO!';
+    if(warn) warn.textContent='🚨 ATENÇÃO: APÓS 3 INFRAÇÕES O RESULTADO É ENVIADO AO PROFESSOR!';
     document.querySelectorAll('.opt,.go,.btn-start-quiz').forEach(b=>{
       b.disabled=false; b.style.pointerEvents='';
     });
@@ -3265,10 +3366,12 @@ function initBench(){
   // ── dblclick: LIBERADO (é o mecanismo de resposta) ────────────
   // Não bloquear dblclick — é usado pelo aluno para confirmar alternativas
 
-  // ── 2. CONTEXT MENU (right click / long press menu) ───────────
+  // ── 2. CONTEXT MENU — bloqueado silenciosamente ────────────────
+  // Infração só ocorre no bloco 7 abaixo (long-press com contextmenu real)
+  // Botão direito acidental no touchpad do Chromebook → apenas bloqueia, sem punir
   document.addEventListener('contextmenu',e=>{
-    e.preventDefault();
-    logSuspicion('MENU_DIREITO','Menu de contexto aberto (botão direito / toque longo)');
+    e.preventDefault(); // sempre bloqueia o menu
+    // NÃO chama logSuspicion aqui — o bloco 7 cuida disso com mais inteligência
   });
 
   // ── 3. KEYBOARD shortcuts ─────────────────────────────────────
@@ -3293,36 +3396,42 @@ function initBench(){
     }
   });
 
-  // ── 4. VISIBILITY CHANGE (tab switch / minimize / app switch) ─
+  // ── 4. VISIBILITY CHANGE (troca de aba real — confiável no Chromebook) ──
   document.addEventListener('visibilitychange',()=>{
     if(document.hidden && isQuizActive()){
-      logSuspicion('ABA_OCULTA','Aba/janela ocultada durante avaliação (troca de app ou minimizar)');
+      logSuspicion('ABA_OCULTA','Aba/janela ocultada durante avaliação (troca de aba confirmada)');
     }
   });
 
-  // ── 5. WINDOW BLUR (Alt+Tab, click outside window) ─────────────
-  // Throttled to avoid spam
+  // ── 5. WINDOW BLUR — OPÇÃO A (comportamental: só pune após 30s ausente) ──
+  // Chromebook gera blur/focus constantemente por touchpad, notificações e
+  // duplo clique. Grace period de 30s evita todos os falsos positivos.
   let _blurTimer=null;
+  let _blurStart=null;
+  let _lastDbl=0;
+  const AUSENCIA_MS=30000; // 30 segundos contínuos fora = suspeito
+  document.addEventListener('dblclick',()=>{ _lastDbl=Date.now(); },{capture:true,passive:true});
   window.addEventListener('blur',()=>{
     if(!isQuizActive()) return;
+    _blurStart=Date.now();
     clearTimeout(_blurTimer);
     _blurTimer=setTimeout(()=>{
       if(!document.hasFocus() && isQuizActive()){
-        logSuspicion('FOCO_PERDIDO','Janela perdeu o foco (Alt+Tab ou clique fora)');
+        // Último dblclick há menos de 3s → foi o mecanismo de resposta, ignorar
+        if(Date.now()-_lastDbl < 3000) return;
+        logSuspicion('AUSENCIA_LONGA','Janela sem foco por mais de 30 segundos durante avaliação');
       }
-    }, 800); // 800ms grace period to avoid false positives on tab interactions
+    }, AUSENCIA_MS);
   });
-  window.addEventListener('focus',()=>clearTimeout(_blurTimer));
+  window.addEventListener('focus',()=>{
+    clearTimeout(_blurTimer);
+    _blurStart=null;
+  });
 
-  // ── 6. PAGE HIDE (back button, close tab, navigate away) ───────
+  // ── 6. PAGE HIDE / BEFORE UNLOAD ───────────────────────────────────────
   window.addEventListener('pagehide',()=>{
-    if(isQuizActive()){
-      // Best-effort: try to log (may not fire in all cases)
-      logSuspicion('SAIU_PAGINA','Aluno saiu da página durante avaliação');
-    }
+    if(isQuizActive()) logSuspicion('SAIU_PAGINA','Aluno saiu da página durante avaliação');
   });
-
-  // ── 7. BEFORE UNLOAD (tab close / navigate) ────────────────────
   window.addEventListener('beforeunload',e=>{
     if(isQuizActive()){
       e.preventDefault();
@@ -3331,46 +3440,36 @@ function initBench(){
     }
   });
 
-  // ── 8. GOOGLE LENS — Mobile long-press ─────────────────────────
-  // Block ANY long press anywhere on page during quiz
-  let _lpt=null;
-  let _touchStartX=0, _touchStartY=0;
-
-  document.addEventListener('touchstart',e=>{
-    _touchStartX=e.touches[0].clientX;
-    _touchStartY=e.touches[0].clientY;
-    // Long press = holding finger > 600ms without moving
-    _lpt=setTimeout(()=>{
-      if(isQuizActive()){
-        logSuspicion('LONG_PRESS','Toque longo detectado — possível Google Lens ou menu de contexto');
-        // Cancel the touch to prevent the context menu
-        document.dispatchEvent(new TouchEvent('touchend'));
-      }
-    },600);
+  // ── 7. LONG-PRESS — só pune se vier com contextmenu em mobile ─────────
+  // Chromebook touchpad acidental NÃO gera contextmenu → nunca falso positivo
+  // O listener de contextmenu da seção 2 bloqueia o menu silenciosamente.
+  // Aqui só registramos a infração quando for claramente intencional (mobile).
+  let _lpContextPending=false;
+  document.addEventListener('touchstart',()=>{
+    _lpContextPending=true;
+    setTimeout(()=>{ _lpContextPending=false; },1500);
   },{passive:true});
-
-  document.addEventListener('touchend',  ()=>clearTimeout(_lpt),{passive:true});
-  document.addEventListener('touchcancel',()=>clearTimeout(_lpt),{passive:true});
-  document.addEventListener('touchmove',e=>{
-    // If finger moved more than 10px → it's a scroll, not a long press
-    const dx=Math.abs(e.touches[0].clientX-_touchStartX);
-    const dy=Math.abs(e.touches[0].clientY-_touchStartY);
-    if(dx>10||dy>10) clearTimeout(_lpt);
-  },{passive:true});
-
-  // Block touchstart on images (direct lens trigger)
-  document.addEventListener('touchstart',e=>{
-    if(e.target.tagName==='IMG'||e.target.tagName==='CANVAS'||e.target.tagName==='SVG'){
-      e.preventDefault();
+  // Infração só em mobile com long-press real (touchstart → contextmenu)
+  document.addEventListener('contextmenu',e=>{
+    // e.preventDefault() já feito no listener da seção 2
+    if(isQuizActive() && _lpContextPending){
+      logSuspicion('LONG_PRESS','Toque longo com menu de contexto — possível Google Lens');
+      _lpContextPending=false;
     }
-  },{passive:false});
+  });
 
-  // ── 9. DRAG (desktop Google Lens / copy-image) ─────────────────
+  // ── 8. DRAG — só pune arrastar imagens/SVG (captura visual) ───────────
+  // Arrastar texto ou botões no Chromebook é comportamento normal do touchpad
   document.addEventListener('dragstart',e=>{
-    e.preventDefault();
-    if(isQuizActive()){
-      logSuspicion('ARRASTAR','Tentativa de arrastar elemento (possível captura de imagem)');
+    const tag=(e.target||{}).tagName||'';
+    if(['IMG','CANVAS','SVG','VIDEO'].includes(tag)){
+      e.preventDefault();
+      if(isQuizActive()){
+        logSuspicion('ARRASTAR_IMAGEM','Tentativa de arrastar imagem (possível captura)');
+      }
     }
+    // Outros elementos: bloquear silenciosamente sem infração
+    e.preventDefault();
   });
 
   // ── 10. POINTER LOCK EXIT (some screen capture tools) ──────────
